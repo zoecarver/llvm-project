@@ -1,0 +1,739 @@
+Index: include/functional
+===================================================================
+--- include/functional
++++ include/functional
+@@ -2780,61 +2780,87 @@
+     return _VSTD::__invoke(_VSTD::forward<_Fn>(__f), _VSTD::forward<_Args>(__args)...);
+ }
+ 
+-template <class _DecayFunc>
+-class _LIBCPP_TEMPLATE_VIS __not_fn_imp {
+-  _DecayFunc __fd;
++#endif
+ 
+-public:
+-    __not_fn_imp() = delete;
++#if _LIBCPP_STD_VER > 14
+ 
+-    template <class ..._Args>
+-    _LIBCPP_INLINE_VISIBILITY
+-    auto operator()(_Args&& ...__args) &
+-            noexcept(noexcept(!_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...)))
+-        -> decltype(          !_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...))
+-        { return              !_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...); }
++template<class _Op, class _Tuple, class _Idxs = typename __make_tuple_indices<tuple_size<_Tuple>::value>::type>
++struct __perfect_forward_impl;
+ 
+-    template <class ..._Args>
+-    _LIBCPP_INLINE_VISIBILITY
+-    auto operator()(_Args&& ...__args) &&
+-            noexcept(noexcept(!_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...)))
+-        -> decltype(          !_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...))
+-        { return              !_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...); }
++template<class _Op, class... _Bound, size_t... _Idxs>
++struct __perfect_forward_impl<_Op, __tuple_types<_Bound...>, __tuple_indices<_Idxs...>>
++{
++    _VSTD::tuple<_Bound...> __bound;
+ 
+-    template <class ..._Args>
+-    _LIBCPP_INLINE_VISIBILITY
+-    auto operator()(_Args&& ...__args) const&
+-            noexcept(noexcept(!_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...)))
+-        -> decltype(          !_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...))
+-        { return              !_VSTD::invoke(__fd, _VSTD::forward<_Args>(__args)...); }
++    template<class... _Args>
++    auto operator()(_Args&&... __args) &
++    noexcept(noexcept(_Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...)))
++    -> decltype(      _Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...))
++    {return           _Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...);}
+ 
++    template<class... _Args>
++    auto operator()(_Args&&... __args) const&
++    noexcept(noexcept(_Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...)))
++    -> decltype(      _Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...))
++    {return           _Op::__call(_VSTD::get<_Idxs>(__bound)..., _VSTD::forward<_Args>(__args)...);}
+ 
+-    template <class ..._Args>
+-    _LIBCPP_INLINE_VISIBILITY
+-    auto operator()(_Args&& ...__args) const&&
+-            noexcept(noexcept(!_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...)))
+-        -> decltype(          !_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...))
+-        { return              !_VSTD::invoke(_VSTD::move(__fd), _VSTD::forward<_Args>(__args)...); }
++    template<class... _Args>
++    auto operator()(_Args&&... __args) &&
++    noexcept(noexcept(_Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...)))
++    -> decltype(      _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...))
++    {return           _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...);}
+ 
+-private:
+-    template <class _RawFunc,
+-              class = enable_if_t<!is_same<decay_t<_RawFunc>, __not_fn_imp>::value>>
+-    _LIBCPP_INLINE_VISIBILITY
+-    explicit __not_fn_imp(_RawFunc&& __rf)
+-        : __fd(_VSTD::forward<_RawFunc>(__rf)) {}
++    template<class... _Args>
++    auto operator()(_Args&&... __args) const&&
++    noexcept(noexcept(_Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...)))
++    -> decltype(      _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...))
++    {return           _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))..., _VSTD::forward<_Args>(__args)...);}
+ 
+-    template <class _RawFunc>
+-    friend inline _LIBCPP_INLINE_VISIBILITY
+-    __not_fn_imp<decay_t<_RawFunc>> not_fn(_RawFunc&&);
++    template<class... _BoundArgs>
++    __perfect_forward_impl(_BoundArgs&&... __bound) :
++        __bound(_VSTD::forward<_BoundArgs>(__bound)...) { }
+ };
+ 
+-template <class _RawFunc>
+-inline _LIBCPP_INLINE_VISIBILITY
+-__not_fn_imp<decay_t<_RawFunc>> not_fn(_RawFunc&& __fn) {
+-    return __not_fn_imp<decay_t<_RawFunc>>(_VSTD::forward<_RawFunc>(__fn));
++template<class _Op, class _Fn, class... _Bound>
++using __perfect_forward = __perfect_forward_impl<_Op, __tuple_types<decay_t<_Fn>,
++                                                                    typename unwrap_ref_decay<_Bound>::type...>>;
++
++struct __not_fn_op
++{
++    template<class... _Args>
++    static auto __call(_Args&&... __args)
++    noexcept(noexcept(!_VSTD::invoke(_VSTD::forward<_Args>(__args)...)))
++    -> decltype(      !_VSTD::invoke(_VSTD::forward<_Args>(__args)...))
++    { return          !_VSTD::invoke(_VSTD::forward<_Args>(__args)...); }
++};
++
++template<class _Fn>
++inline auto not_fn(_Fn&& __f)
++{
++    return __perfect_forward<__not_fn_op, _Fn> (_VSTD::forward<_Fn>(__f));
+ }
+ 
+-#endif
++#endif // _LIBCPP_STD_VER > 14
++
++#if _LIBCPP_STD_VER > 17
++
++struct __bind_front_op
++{
++    template<class... _Args>
++    static auto __call(_Args&&... __args)
++    noexcept(noexcept(_VSTD::invoke(_VSTD::forward<_Args>(__args)...)))
++    -> decltype(      _VSTD::invoke(_VSTD::forward<_Args>(__args)...))
++    { return          _VSTD::invoke(_VSTD::forward<_Args>(__args)...); }
++};
++
++template<class _Fn, class... _Args>
++inline auto bind_front(_Fn&& __f, _Args&&... __args)
++{
++    return __perfect_forward<__bind_front_op, _Fn, _Args...>(_VSTD::forward<_Fn>(__f),
++                                                             _VSTD::forward<_Args>(__args)...);
++}
++
++#endif // _LIBCPP_STD_VER > 17
+ 
+ // struct hash<T*> in <memory>
+ 
+@@ -2960,13 +2986,13 @@
+ template <class _Container, class _Predicate>
+ inline void __libcpp_erase_if_container( _Container& __c, _Predicate __pred)
+ {
+-	for (typename _Container::iterator __iter = __c.begin(), __last = __c.end(); __iter != __last;)
+-	{
+-		if (__pred(*__iter))
+-			__iter = __c.erase(__iter);
+-		else
+-			++__iter;
+-	}
++    for (typename _Container::iterator __iter = __c.begin(), __last = __c.end(); __iter != __last;)
++    {
++        if (__pred(*__iter))
++            __iter = __c.erase(__iter);
++        else
++            ++__iter;
++    }
+ }
+ 
+ _LIBCPP_END_NAMESPACE_STD
+Index: test/std/utilities/function.objects/func.bind_front/bind_front.fail.cpp
+===================================================================
+--- /dev/null
++++ test/std/utilities/function.objects/func.bind_front/bind_front.fail.cpp
+@@ -0,0 +1,35 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// UNSUPPORTED: c++98, c++03, c++11, c++14, c++17
++
++// functional
++
++// template <class F, class... Args> unspecified bind_front(F&&, Args&&...);
++
++#include <functional>
++
++constexpr int pass(const int n) { return n; }
++
++int simple(int n) { return n; }
++
++template<class T>
++T do_nothing(T t) { return t; }
++
++int main(int, char**)
++{
++    int n = 1;
++    const int c = 1;
++
++    auto p = std::bind_front(pass, c);
++    static_assert(p() == 1); // expected-error {{static_assert expression is not an integral constant expression}}
++
++    auto d = std::bind_front(do_nothing, n); // expected-error {{no matching function for call to 'bind_front'}}
++
++    return 0;
++}
+\ No newline at end of file
+Index: test/std/utilities/function.objects/func.bind_front/bind_front.pass.cpp
+===================================================================
+--- /dev/null
++++ test/std/utilities/function.objects/func.bind_front/bind_front.pass.cpp
+@@ -0,0 +1,141 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++// UNSUPPORTED: c++98, c++03, c++11, c++14, c++17
++
++// functional
++
++// template <class F, class... Args> unspecified bind_front(F&&, Args&&...);
++
++#include <functional>
++#include "callable_types.h"
++
++int add (int a, int b) { return a + b; }
++
++int long_test (int a, int b, int c, int d, int e, int f)
++{ return a + b + c + d + e + f; }
++
++struct Foo { int a; int b; };
++
++struct FooCall { Foo operator()(int a, int b) { return Foo { a, b }; } };
++
++struct S { bool operator()(int a) { return a == 1; } };
++
++void basic_tests()
++{
++    int n = 2;
++    int m = 1;
++
++    auto a = std::bind_front(add, m, n);
++    assert(a() == 3);
++
++    auto b = std::bind_front(long_test, m, n, m, m, m, m);
++    assert(b() == 7);
++
++    auto c = std::bind_front(long_test, n, m);
++    assert(c(1, 1, 1, 1) == 7);
++
++    auto d = std::bind_front(S{}, m);
++    assert(d());
++
++    auto f = std::bind_front(add, n);
++    assert(f(3) == 5);
++}
++
++void constructor_tests()
++{
++    {
++        MoveOnlyCallable value(true);
++        using RetT = decltype(std::bind_front(std::move(value), 1));
++
++        static_assert( std::is_move_constructible<RetT>::value);
++        static_assert(!std::is_copy_constructible<RetT>::value);
++        static_assert(!std::is_move_assignable<RetT>::value);
++        static_assert(!std::is_copy_assignable<RetT>::value);
++
++        auto ret = std::bind_front(std::move(value), 1);
++        assert(ret());
++        assert(ret(1, 2, 3));
++
++        auto ret1 = std::move(ret);
++        assert(!ret());
++        assert(ret1());
++        assert(ret1(1, 2, 3));
++    }
++    {
++        CopyCallable value(true);
++        using RetT = decltype(std::bind_front(value, 1));
++
++        static_assert( std::is_move_constructible<RetT>::value);
++        static_assert( std::is_copy_constructible<RetT>::value);
++        static_assert(!std::is_move_assignable<RetT>::value);
++        static_assert(!std::is_copy_assignable<RetT>::value);
++
++        auto ret = std::bind_front(value, 1);
++        assert(ret());
++        assert(ret(1, 2, 3));
++
++        auto ret1 = std::move(ret);
++        assert(ret1());
++        assert(ret1(1, 2, 3));
++
++        auto ret2 = std::bind_front(std::move(value), 1);
++        assert(!ret());
++        assert( ret2());
++        assert( ret2(1, 2, 3));
++    }
++    {
++        CopyAssignableWrapper value(true);
++        using RetT = decltype(std::bind_front(value, 1));
++
++        static_assert(std::is_move_constructible<RetT>::value);
++        static_assert(std::is_copy_constructible<RetT>::value);
++        static_assert(std::is_move_assignable<RetT>::value);
++        static_assert(std::is_copy_assignable<RetT>::value);
++    }
++    {
++        MoveAssignableWrapper value(true);
++        using RetT = decltype(std::bind_front(std::move(value), 1));
++
++        static_assert( std::is_move_constructible<RetT>::value);
++        static_assert(!std::is_copy_constructible<RetT>::value);
++        static_assert( std::is_move_assignable<RetT>::value);
++        static_assert(!std::is_copy_assignable<RetT>::value);
++    }
++}
++
++template<class Res, class F, class... Args>
++void test_return(F&& value, Args&&... args)
++{
++    auto ret = std::bind_front(std::forward<F>(value), std::forward<Args>(args)...);
++    static_assert(std::is_same<decltype(ret()), Res>::value);
++}
++
++void test_return_types()
++{
++    test_return<Foo>(FooCall{}, 1, 2);
++    test_return<bool>(S{}, 1);
++    test_return<int>(add, 2, 2);
++}
++
++void test_arg_count()
++{
++    using T = decltype(std::bind_front(add, 1));
++    static_assert(!std::is_invocable<T>::value);
++    static_assert( std::is_invocable<T, int>::value);
++}
++
++int main(int, char**)
++{
++    basic_tests();
++    constructor_tests();
++    test_return_types();
++    test_arg_count();
++
++    return 0;
++}
+\ No newline at end of file
+Index: test/std/utilities/function.objects/func.not_fn/not_fn.pass.cpp
+===================================================================
+--- test/std/utilities/function.objects/func.not_fn/not_fn.pass.cpp
++++ test/std/utilities/function.objects/func.not_fn/not_fn.pass.cpp
+@@ -17,177 +17,7 @@
+ 
+ #include "test_macros.h"
+ #include "type_id.h"
+-
+-
+-///////////////////////////////////////////////////////////////////////////////
+-//                       CALLABLE TEST TYPES
+-///////////////////////////////////////////////////////////////////////////////
+-
+-bool returns_true() { return true; }
+-
+-template <class Ret = bool>
+-struct MoveOnlyCallable {
+-  MoveOnlyCallable(MoveOnlyCallable const&) = delete;
+-  MoveOnlyCallable(MoveOnlyCallable&& other)
+-      : value(other.value)
+-  { other.value = !other.value; }
+-
+-  template <class ...Args>
+-  Ret operator()(Args&&...) { return Ret{value}; }
+-
+-  explicit MoveOnlyCallable(bool x) : value(x) {}
+-  Ret value;
+-};
+-
+-template <class Ret = bool>
+-struct CopyCallable {
+-  CopyCallable(CopyCallable const& other)
+-      : value(other.value) {}
+-
+-  CopyCallable(CopyCallable&& other)
+-      : value(other.value) { other.value = !other.value; }
+-
+-  template <class ...Args>
+-  Ret operator()(Args&&...) { return Ret{value}; }
+-
+-  explicit CopyCallable(bool x) : value(x)  {}
+-  Ret value;
+-};
+-
+-
+-template <class Ret = bool>
+-struct ConstCallable {
+-  ConstCallable(ConstCallable const& other)
+-      : value(other.value) {}
+-
+-  ConstCallable(ConstCallable&& other)
+-      : value(other.value) { other.value = !other.value; }
+-
+-  template <class ...Args>
+-  Ret operator()(Args&&...) const { return Ret{value}; }
+-
+-  explicit ConstCallable(bool x) : value(x)  {}
+-  Ret value;
+-};
+-
+-
+-
+-template <class Ret = bool>
+-struct NoExceptCallable {
+-  NoExceptCallable(NoExceptCallable const& other)
+-      : value(other.value) {}
+-
+-  template <class ...Args>
+-  Ret operator()(Args&&...) noexcept { return Ret{value}; }
+-
+-  template <class ...Args>
+-  Ret operator()(Args&&...) const noexcept { return Ret{value}; }
+-
+-  explicit NoExceptCallable(bool x) : value(x)  {}
+-  Ret value;
+-};
+-
+-struct CopyAssignableWrapper {
+-  CopyAssignableWrapper(CopyAssignableWrapper const&) = default;
+-  CopyAssignableWrapper(CopyAssignableWrapper&&) = default;
+-  CopyAssignableWrapper& operator=(CopyAssignableWrapper const&) = default;
+-  CopyAssignableWrapper& operator=(CopyAssignableWrapper &&) = default;
+-
+-  template <class ...Args>
+-  bool operator()(Args&&...) { return value; }
+-
+-  explicit CopyAssignableWrapper(bool x) : value(x) {}
+-  bool value;
+-};
+-
+-
+-struct MoveAssignableWrapper {
+-  MoveAssignableWrapper(MoveAssignableWrapper const&) = delete;
+-  MoveAssignableWrapper(MoveAssignableWrapper&&) = default;
+-  MoveAssignableWrapper& operator=(MoveAssignableWrapper const&) = delete;
+-  MoveAssignableWrapper& operator=(MoveAssignableWrapper &&) = default;
+-
+-  template <class ...Args>
+-  bool operator()(Args&&...) { return value; }
+-
+-  explicit MoveAssignableWrapper(bool x) : value(x) {}
+-  bool value;
+-};
+-
+-struct MemFunCallable {
+-  explicit MemFunCallable(bool x) : value(x) {}
+-
+-  bool return_value() const { return value; }
+-  bool return_value_nc() { return value; }
+-  bool value;
+-};
+-
+-enum CallType : unsigned {
+-  CT_None,
+-  CT_NonConst = 1,
+-  CT_Const = 2,
+-  CT_LValue = 4,
+-  CT_RValue = 8
+-};
+-
+-inline constexpr CallType operator|(CallType LHS, CallType RHS) {
+-    return static_cast<CallType>(static_cast<unsigned>(LHS) | static_cast<unsigned>(RHS));
+-}
+-
+-struct ForwardingCallObject {
+-
+-  template <class ...Args>
+-  bool operator()(Args&&...) & {
+-      set_call<Args&&...>(CT_NonConst | CT_LValue);
+-      return true;
+-  }
+-
+-  template <class ...Args>
+-  bool operator()(Args&&...) const & {
+-      set_call<Args&&...>(CT_Const | CT_LValue);
+-      return true;
+-  }
+-
+-  // Don't allow the call operator to be invoked as an rvalue.
+-  template <class ...Args>
+-  bool operator()(Args&&...) && {
+-      set_call<Args&&...>(CT_NonConst | CT_RValue);
+-      return true;
+-  }
+-
+-  template <class ...Args>
+-  bool operator()(Args&&...) const && {
+-      set_call<Args&&...>(CT_Const | CT_RValue);
+-      return true;
+-  }
+-
+-  template <class ...Args>
+-  static void set_call(CallType type) {
+-      assert(last_call_type == CT_None);
+-      assert(last_call_args == nullptr);
+-      last_call_type = type;
+-      last_call_args = &makeArgumentID<Args...>();
+-  }
+-
+-  template <class ...Args>
+-  static bool check_call(CallType type) {
+-      bool result =
+-           last_call_type == type
+-        && last_call_args
+-        && *last_call_args == makeArgumentID<Args...>();
+-      last_call_type = CT_None;
+-      last_call_args = nullptr;
+-      return result;
+-  }
+-
+-  static CallType      last_call_type;
+-  static TypeID const* last_call_args;
+-};
+-
+-CallType ForwardingCallObject::last_call_type = CT_None;
+-TypeID const* ForwardingCallObject::last_call_args = nullptr;
+-
+-
++#include "callable_types.h"
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+ //                        BOOL TEST TYPES
+@@ -296,6 +126,10 @@
+         assert(ret() == false);
+         assert(ret2() == true);
+         assert(ret2("abc") == true);
++        // initialize not_fn with rvalue
++        auto ret3 = std::not_fn(std::move(value));
++        assert(ret(0) == false);
++        assert(ret3(0) == true);
+     }
+     {
+         using T = CopyAssignableWrapper;
+Index: test/support/callable_types.h
+===================================================================
+--- /dev/null
++++ test/support/callable_types.h
+@@ -0,0 +1,182 @@
++//===----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++
++#ifndef CALLABLE_TYPES_H
++#define CALLABLE_TYPES_H
++
++#include "type_id.h"
++
++///////////////////////////////////////////////////////////////////////////////
++//                       CALLABLE TEST TYPES
++///////////////////////////////////////////////////////////////////////////////
++
++inline bool returns_true() { return true; }
++
++template <class Ret = bool>
++struct MoveOnlyCallable {
++  MoveOnlyCallable(MoveOnlyCallable const&) = delete;
++  MoveOnlyCallable(MoveOnlyCallable&& other)
++      : value(other.value)
++  { other.value = !other.value; }
++
++  template <class ...Args>
++  Ret operator()(Args&&...) { return Ret{value}; }
++
++  explicit MoveOnlyCallable(bool x) : value(x) {}
++  Ret value;
++};
++
++template <class Ret = bool>
++struct CopyCallable {
++  CopyCallable(CopyCallable const& other)
++      : value(other.value) {}
++
++  CopyCallable(CopyCallable&& other)
++      : value(other.value) { other.value = !other.value; }
++
++  template <class ...Args>
++  Ret operator()(Args&&...) { return Ret{value}; }
++
++  explicit CopyCallable(bool x) : value(x)  {}
++  Ret value;
++};
++
++
++template <class Ret = bool>
++struct ConstCallable {
++  ConstCallable(ConstCallable const& other)
++      : value(other.value) {}
++
++  ConstCallable(ConstCallable&& other)
++      : value(other.value) { other.value = !other.value; }
++
++  template <class ...Args>
++  Ret operator()(Args&&...) const { return Ret{value}; }
++
++  explicit ConstCallable(bool x) : value(x)  {}
++  Ret value;
++};
++
++
++
++template <class Ret = bool>
++struct NoExceptCallable {
++  NoExceptCallable(NoExceptCallable const& other)
++      : value(other.value) {}
++
++  template <class ...Args>
++  Ret operator()(Args&&...) noexcept { return Ret{value}; }
++
++  template <class ...Args>
++  Ret operator()(Args&&...) const noexcept { return Ret{value}; }
++
++  explicit NoExceptCallable(bool x) : value(x)  {}
++  Ret value;
++};
++
++struct CopyAssignableWrapper {
++  CopyAssignableWrapper(CopyAssignableWrapper const&) = default;
++  CopyAssignableWrapper(CopyAssignableWrapper&&) = default;
++  CopyAssignableWrapper& operator=(CopyAssignableWrapper const&) = default;
++  CopyAssignableWrapper& operator=(CopyAssignableWrapper &&) = default;
++
++  template <class ...Args>
++  bool operator()(Args&&...) { return value; }
++
++  explicit CopyAssignableWrapper(bool x) : value(x) {}
++  bool value;
++};
++
++
++struct MoveAssignableWrapper {
++  MoveAssignableWrapper(MoveAssignableWrapper const&) = delete;
++  MoveAssignableWrapper(MoveAssignableWrapper&&) = default;
++  MoveAssignableWrapper& operator=(MoveAssignableWrapper const&) = delete;
++  MoveAssignableWrapper& operator=(MoveAssignableWrapper &&) = default;
++
++  template <class ...Args>
++  bool operator()(Args&&...) { return value; }
++
++  explicit MoveAssignableWrapper(bool x) : value(x) {}
++  bool value;
++};
++
++struct MemFunCallable {
++  explicit MemFunCallable(bool x) : value(x) {}
++
++  bool return_value() const { return value; }
++  bool return_value_nc() { return value; }
++  bool value;
++};
++
++enum CallType : unsigned {
++  CT_None,
++  CT_NonConst = 1,
++  CT_Const = 2,
++  CT_LValue = 4,
++  CT_RValue = 8
++};
++
++inline constexpr CallType operator|(CallType LHS, CallType RHS) {
++    return static_cast<CallType>(static_cast<unsigned>(LHS) | static_cast<unsigned>(RHS));
++}
++
++struct ForwardingCallObject {
++
++  template <class ...Args>
++  bool operator()(Args&&...) & {
++      set_call<Args&&...>(CT_NonConst | CT_LValue);
++      return true;
++  }
++
++  template <class ...Args>
++  bool operator()(Args&&...) const & {
++      set_call<Args&&...>(CT_Const | CT_LValue);
++      return true;
++  }
++
++  // Don't allow the call operator to be invoked as an rvalue.
++  template <class ...Args>
++  bool operator()(Args&&...) && {
++      set_call<Args&&...>(CT_NonConst | CT_RValue);
++      return true;
++  }
++
++  template <class ...Args>
++  bool operator()(Args&&...) const && {
++      set_call<Args&&...>(CT_Const | CT_RValue);
++      return true;
++  }
++
++  template <class ...Args>
++  static void set_call(CallType type) {
++      assert(last_call_type == CT_None);
++      assert(last_call_args == nullptr);
++      last_call_type = type;
++      last_call_args = &makeArgumentID<Args...>();
++  }
++
++  template <class ...Args>
++  static bool check_call(CallType type) {
++      bool result =
++           last_call_type == type
++        && last_call_args
++        && *last_call_args == makeArgumentID<Args...>();
++      last_call_type = CT_None;
++      last_call_args = nullptr;
++      return result;
++  }
++
++  static CallType      last_call_type;
++  static TypeID const* last_call_args;
++};
++
++CallType ForwardingCallObject::last_call_type = CT_None;
++TypeID const* ForwardingCallObject::last_call_args = nullptr;
++
++#endif // CALLABLE_TYPES_H
+\ No newline at end of file
+Index: www/cxx2a_status.html
+===================================================================
+--- www/cxx2a_status.html
++++ www/cxx2a_status.html
+@@ -108,7 +108,7 @@
+ 
+  	<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+ 	<tr><td><a href="https://wg21.link/P0318R1">P0318R1</a></td><td>LWG</td><td>unwrap_ref_decay and unwrap_reference</td><td>San Diego</td><td>Complete</td><td>8.0</td></tr>
+-	<tr><td><a href="https://wg21.link/P0356R5">P0356R5</a></td><td>LWG</td><td>Simplified partial function application</td><td>San Diego</td><td><i> </i></td><td></td></tr>
++	<tr><td><a href="https://wg21.link/P0356R5">P0356R5</a></td><td>LWG</td><td>Simplified partial function application</td><td>San Diego</td><td>Complete</td><td></td></tr>
+ 	<tr><td><a href="https://wg21.link/P0357R3">P0357R3</a></td><td>LWG</td><td>reference_wrapper for incomplete types</td><td>San Diego</td><td>Complete</td><td>8.0</td></tr>
+ 	<tr><td><a href="https://wg21.link/P0482R6">P0482R6</a></td><td>CWG</td><td>char8_t: A type for UTF-8 characters and strings</td><td>San Diego</td><td><i> </i></td><td></td></tr>
+ 	<tr><td><a href="https://wg21.link/P0487R1">P0487R1</a></td><td>LWG</td><td>Fixing operator&gt;&gt;(basic_istream&amp;, CharT*) (LWG 2499)</td><td>San Diego</td><td>Complete</td><td>8.0</td></tr>
