@@ -2906,6 +2906,51 @@ invoke(_Fn&& __f, _Args&&... __args)
 
 #if _LIBCPP_STD_VER > 14
 
+template<template <class...> class _Trait, class _Arg, class... _Args>
+struct __apply_all
+{
+    static constexpr bool value = __apply_all<_Trait, _Args...>::value &&
+                                  _Trait<_Arg>::value;
+};
+
+template<template <class...> class _Trait, class _Arg>
+struct __apply_all<_Trait, _Arg> : _Trait<_Arg> { };
+
+template<class, class, class...>
+struct __zip_then_apply_all;
+
+template<template <class...> class _Trait,
+         template <class...> class _First,
+         class... _TraitArgs,
+         class _FirstArg, class... _FirstArgs,
+         class _SecondArg, class... _SecondArgs>
+auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>,
+                               _First<_FirstArg, _FirstArgs...>,
+                               _SecondArg, _SecondArgs...)
+    -> std::integral_constant<bool, __zip_then_apply_all<_Trait<_TraitArgs...>,
+                                                         _VSTD::tuple<_FirstArgs...>,
+                                                         _SecondArgs...>::value &&
+                                    _Trait<_FirstArg, _SecondArg>::value>;
+
+template<template <class...> class _Trait,
+         template <class...> class _First,
+         class... _TraitArgs,
+         class _FirstArg, class _SecondArg>
+auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>, _First<_FirstArg>, _SecondArg)
+    -> _Trait<_FirstArg, _SecondArg>;
+
+template<template <class...> class _Trait,
+         template <class...> class _First,
+         class... _TraitArgs>
+auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>, _First<>)
+    -> _VSTD::true_type;
+
+template<class _Trait, class _First, class... _SecondArgs>
+struct __zip_then_apply_all
+    : decltype(__zip_then_apply_all_impl(declval<_Trait>(),
+                                         declval<_First>(),
+                                         declval<_SecondArgs>()...)) {};
+
 template<class _Op, class _Tuple,
          class _Idxs = typename __make_tuple_indices<tuple_size<_Tuple>::value>::type>
 struct __perfect_forward_impl;
@@ -2945,14 +2990,18 @@ struct __perfect_forward_impl<_Op, __tuple_types<_Bound...>, __tuple_indices<_Id
     {return           _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))...,
                                   _VSTD::forward<_Args>(__args)...);}
 
-    template<class... _BoundArgs>
+    template<class... _BoundArgs,
+             class = _EnableIf<__zip_then_apply_all<is_constructible<int, int>,
+                                                    _VSTD::tuple<_Bound...>,
+                                                    _BoundArgs...>::value &&
+                               __apply_all<is_move_constructible, _Bound...>::value>>
     __perfect_forward_impl(_BoundArgs&&... __bound) :
         __bound(_VSTD::forward<_BoundArgs>(__bound)...) { }
 };
 
 template<class _Op, class... _Args>
 using __perfect_forward =
-    __perfect_forward_impl<_Op, __tuple_types<decay_t<_Args>...>;
+    __perfect_forward_impl<_Op, __tuple_types<decay_t<_Args>...>>;
 
 struct __not_fn_op
 {
@@ -2982,7 +3031,9 @@ struct __bind_front_op
     { return          _VSTD::invoke(_VSTD::forward<_Args>(__args)...); }
 };
 
-template<class _Fn, class... _Args>
+template<class _Fn, class... _Args,
+         class = _EnableIf<is_constructible_v<decay_t<_Fn>, _Fn> &&
+                           is_move_constructible_v<decay_t<_Fn>>>>
 inline auto bind_front(_Fn&& __f, _Args&&... __args)
 {
     return __perfect_forward<__bind_front_op, _Fn, _Args...>(_VSTD::forward<_Fn>(__f),
