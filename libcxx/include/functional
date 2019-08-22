@@ -2906,54 +2906,45 @@ invoke(_Fn&& __f, _Args&&... __args)
 
 #if _LIBCPP_STD_VER > 14
 
-template<template <class...> class _Trait, class _Arg, class... _Args>
-struct __apply_all
-{
-    static constexpr bool value = __apply_all<_Trait, _Args...>::value &&
-                                  _Trait<_Arg>::value;
-};
+template<template<class...> class, class>
+struct __instance_of : _VSTD::false_type { };
 
-template<template <class...> class _Trait, class _Arg>
-struct __apply_all<_Trait, _Arg> : _Trait<_Arg> { };
-
-template<class, class, class...>
-struct __zip_then_apply_all;
-
-template<template <class...> class _Trait,
-         template <class...> class _First,
-         class... _TraitArgs,
-         class _FirstArg, class... _FirstArgs,
-         class _SecondArg, class... _SecondArgs>
-auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>,
-                               _First<_FirstArg, _FirstArgs...>,
-                               _SecondArg, _SecondArgs...)
-    -> std::integral_constant<bool, __zip_then_apply_all<_Trait<_TraitArgs...>,
-                                                         _VSTD::tuple<_FirstArgs...>,
-                                                         _SecondArgs...>::value &&
-                                    _Trait<_FirstArg, _SecondArg>::value>;
-
-template<template <class...> class _Trait,
-         template <class...> class _First,
-         class... _TraitArgs,
-         class _FirstArg, class _SecondArg>
-auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>, _First<_FirstArg>, _SecondArg)
-    -> _Trait<_FirstArg, _SecondArg>;
-
-template<template <class...> class _Trait,
-         template <class...> class _First,
-         class... _TraitArgs>
-auto __zip_then_apply_all_impl(_Trait<_TraitArgs...>, _First<>)
-    -> _VSTD::true_type;
-
-template<class _Trait, class _First, class... _SecondArgs>
-struct __zip_then_apply_all
-    : decltype(__zip_then_apply_all_impl(declval<_Trait>(),
-                                         declval<_First>(),
-                                         declval<_SecondArgs>()...)) {};
+template<template<class...> class _Tp, class... _Args>
+struct __instance_of<_Tp, _Tp<_Args...>> : _VSTD::true_type { };
 
 template<class _Op, class _Tuple,
          class _Idxs = typename __make_tuple_indices<tuple_size<_Tuple>::value>::type>
 struct __perfect_forward_impl;
+
+template<bool...> struct __bool_pack;
+template<bool... _BArgs>
+using __all_true = _VSTD::is_same<__bool_pack<_BArgs..., true>, __bool_pack<true, _BArgs...>>;
+
+template<class _T1, class _T2>
+using __is_constructible_single = _VSTD::is_constructible<_T1, _T2>;
+
+template<class _T1, class _T2>
+struct __all_const_impl;
+
+template<class..._T1Args, class... _T2Args>
+struct __all_const_impl<__tuple_types<_T1Args...>, __tuple_types<_T2Args...>>
+{
+    constexpr static bool value =
+        __all_true<__is_constructible_single<_T1Args, _T2Args>::value...>::value;
+};
+
+template<template<class...> class _T1, class... _T1Args, class... _T2Args>
+auto __all_const_fn(_T1<_T1Args...>, _T2Args...)
+    -> __all_const_impl<__tuple_types<_T1Args...>, __tuple_types<_T2Args...>>;
+
+template<class _T1, class... _T2Args>
+struct __all_const
+    // Unfortunately the following is necessary because of a bug in clang.
+    : std::conditional<__instance_of<__perfect_forward_impl,
+                                     typename _VSTD::tuple_element<0, _VSTD::tuple<decay_t<_T2Args>...>>::type>::value,
+                       false_type,
+                       decltype(__all_const_fn(declval<_T1>(), declval<_T2Args>()...))>::type
+{};
 
 template<class _Op, class... _Bound, size_t... _Idxs>
 struct __perfect_forward_impl<_Op, __tuple_types<_Bound...>, __tuple_indices<_Idxs...>>
@@ -2990,11 +2981,30 @@ struct __perfect_forward_impl<_Op, __tuple_types<_Bound...>, __tuple_indices<_Id
     {return           _Op::__call(_VSTD::get<_Idxs>(_VSTD::move(__bound))...,
                                   _VSTD::forward<_Args>(__args)...);}
 
+//     template<class... _Args, _Fn class = enable_if_t<_VSTD::is_copy_constructible_v<_Fn>>>
+//     __perfect_forward_impl(__perfect_forward_impl<_Args&&...> const& __other)
+//         : __bound(__other.__bound)
+//     {}
+//
+//     template<class... _Args, class = _EnableIf<_VSTD::is_move_constructible_v<_Fn>>>
+//     __perfect_forward_impl(__perfect_forward_impl<_Args&&...> && __other)
+//         : __bound(_VSTD::move(__other.__bound))
+//     {}
+
+    template<class _Fn = typename _VSTD::tuple_element<0, _VSTD::tuple<_Bound...>>::type,
+             class = _EnableIf<_VSTD::is_copy_constructible_v<_Fn>>>
+    __perfect_forward_impl(__perfect_forward_impl const& __other)
+        : __bound(__other.__bound) {}
+
+    template<class _Fn = typename _VSTD::tuple_element<0, _VSTD::tuple<_Bound...>>::type,
+             class = _EnableIf<_VSTD::is_move_constructible_v<_Fn>>>
+    __perfect_forward_impl(__perfect_forward_impl && __other)
+        : __bound(_VSTD::move(__other.__bound)) {}
+
     template<class... _BoundArgs,
-             class = _EnableIf<__zip_then_apply_all<is_constructible<int, int>,
-                                                    _VSTD::tuple<_Bound...>,
-                                                    _BoundArgs...>::value &&
-                               __apply_all<is_move_constructible, _Bound...>::value>>
+             class = _EnableIf<__all_const<_VSTD::tuple<_Bound...>,
+                                           _BoundArgs...>::value &&
+                               __all_true<is_move_constructible<_Bound>::value...>::value>>
     __perfect_forward_impl(_BoundArgs&&... __bound) :
         __bound(_VSTD::forward<_BoundArgs>(__bound)...) { }
 };
