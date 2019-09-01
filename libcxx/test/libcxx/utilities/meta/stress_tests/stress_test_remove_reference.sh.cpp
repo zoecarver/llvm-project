@@ -13,8 +13,8 @@
 //
 //  Impl                       Compile Time      Object Size
 // ----------------------------------------------------------
-// new_add_lvalue_reference:   23,359.202 ms     171 K
-// std::add_lvalue_reference:  73,160.138 ms     201 K
+// new_remove_reference:       22.849 s          121 K
+// std::remove_reference:      25.643 s          121 K
 //
 // RUN: %cxx %flags %compile_flags -c %s -o %S/orig.o -ggdb  -ggnu-pubnames -ftemplate-depth=5000 -ftime-trace -std=c++17
 // RUN: %cxx %flags %compile_flags -c %s -o %S/new.o -ggdb  -ggnu-pubnames -ftemplate-depth=5000 -ftime-trace -std=c++17 -DTEST_NEW
@@ -30,20 +30,18 @@ template <int N> struct Arg { enum { value = 1 }; };
 #ifdef TEST_NEW
 
 template <class T>
-struct new_add_lvalue_reference
+struct new_remove_reference
 {
-  typedef __add_lvalue_reference(T) type;
+  typedef __remove_reference(T) type;
 };
 
-#define TEST_CASE_NOP()  new_add_lvalue_reference< Arg< __COUNTER__ > >{},
-#define TEST_CASE_TYPE() typename new_add_lvalue_reference< Arg< __COUNTER__ > >::type,
-#define TEST_CASE_RVAL() typename new_add_lvalue_reference< Arg< __COUNTER__ >&& >::type,
+#define TEST_CASE_NOP()  new_remove_reference< Arg< __COUNTER__ > >{},
+#define TEST_CASE_TYPE() typename new_remove_reference< Arg< __COUNTER__ > >::type,
 
 #else
 
-#define TEST_CASE_NOP()  std::add_lvalue_reference< Arg< __COUNTER__ > >{},
-#define TEST_CASE_TYPE() typename std::add_lvalue_reference< Arg< __COUNTER__ > >::type,
-#define TEST_CASE_RVAL() typename std::add_lvalue_reference< Arg< __COUNTER__ >&& >::type,
+#define TEST_CASE_NOP()  std::remove_reference< Arg< __COUNTER__ > >{},
+#define TEST_CASE_TYPE() typename std::remove_reference< Arg< __COUNTER__ > >::type,
 
 #endif
 
@@ -55,13 +53,11 @@ int x = sink(
 );
 
 void Foo( REPEAT_10000(TEST_CASE_TYPE) int) { }
-void Bar( REPEAT_10000(TEST_CASE_RVAL) int) { }
 
 void escape() {
 
 sink(&x);
 sink(&Foo);
-sink(&Bar);
 }
 
 
