@@ -4348,7 +4348,10 @@ public:
 class UnaryTransformType : public Type {
 public:
   enum UTTKind {
-    EnumUnderlyingType
+    EnumUnderlyingType,
+    RemoveReferenceType,
+    AddRValueType,
+    AddLValueType
   };
 
 private:

@@ -1126,10 +1126,6 @@ template <class _Tp>
 decltype(_VSTD::__declval<_Tp>(0))
 declval() _NOEXCEPT;
 
-template <class _Tp>
-struct _AddLValueRef
-{ typedef __add_lvalue_reference(_Tp) type; };
-
 // __uncvref
 
 template <class _Tp>

@@ -88,6 +88,8 @@ namespace clang {
     TST_decltype,         // C++11 decltype
     TST_underlyingType,   // __underlying_type for C++11
     TST_addLValueReferenceType, // __add_lvalue_reference
+    TST_addRValueReferenceType, // __add_rvalue_reference
+    TST_removeReferenceType, // __remove_reference
     TST_auto,             // C++11 auto
     TST_decltype_auto,    // C++1y decltype(auto)
     TST_auto_type,        // __auto_type extension

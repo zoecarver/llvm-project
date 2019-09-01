@@ -2602,6 +2602,7 @@ private:
                                          SourceLocation StartLoc,
                                          SourceLocation EndLoc);
   void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
+  DeclSpec::TST ReferenceTransformTokToDeclSpec();
   void ParseAddReferenceTypeSpecifier(DeclSpec &DS);
   void ParseAtomicSpecifier(DeclSpec &DS);
 

@@ -1251,6 +1251,22 @@ getImageAccess(const ParsedAttributesView &Attrs) {
   return OpenCLAccessAttr::Keyword_read_only;
 }
 
+static UnaryTransformType::UTTKind
+TSTToUnaryTransformType(DeclSpec::TST SwitchTST) {
+  switch (SwitchTST) {
+  case TST_addLValueReferenceType:
+    return UnaryTransformType::AddLValueType;
+  case TST_addRValueReferenceType:
+    return UnaryTransformType::AddRValueType;
+  case TST_removeReferenceType:
+    return UnaryTransformType::RemoveReferenceType;
+  case TST_underlyingType:
+    return UnaryTransformType::EnumUnderlyingType;
+  default:
+    assert(false && "Cannot map TST to unary transform type");
+  }
+}
+
 /// Convert the specified declspec to the appropriate type
 /// object.
 /// \param state Specifies the declarator containing the declaration specifier
@@ -1594,9 +1610,19 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     }
     break;
   case DeclSpec::TST_addLValueReferenceType:
+  case DeclSpec::TST_addRValueReferenceType:
+  case DeclSpec::TST_removeReferenceType:
     Result = S.GetTypeFromParser(DS.getRepAsType());
-    assert(!Result.isNull() && "__add_lvalue_reference may not have received a type.");
+    assert(!Result.isNull() &&
+           "Reference manipulation type transform may not have received a type.");
+    Result = S.BuildUnaryTransformType(Result,
+                                       TSTToUnaryTransformType(DS.getTypeSpecType()),
+                                       DS.getTypeSpecTypeLoc());
+    if (Result.isNull()) {
+      declarator.setInvalidType(true);
+    }
     break;
+
 
   case DeclSpec::TST_auto:
     Result = Context.getAutoType(QualType(), AutoTypeKeyword::Auto, false);
@@ -5460,8 +5486,8 @@ namespace {
       TL.setUnderlyingTInfo(TInfo);
     }
     void VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL) {
-      // FIXME: This holds only because we only have one unary transform.
-      assert(DS.getTypeSpecType() == DeclSpec::TST_underlyingType);
+      // TODO: Should we check something like "IsUnaryTypeTransfrom(DS.getTypeSpecTypeLoc())"?
+      // assert(DS.getTypeSpecType() == DeclSpec::TST_underlyingType);
       TL.setKWLoc(DS.getTypeSpecTypeLoc());
       TL.setParensRange(DS.getTypeofParensRange());
       assert(DS.getRepAsType());
@@ -8413,6 +8439,21 @@ QualType Sema::BuildUnaryTransformType(QualType BaseType,
       return Context.getUnaryTransformType(BaseType, Underlying,
                                         UnaryTransformType::EnumUnderlyingType);
     }
+  case UnaryTransformType::AddLValueType: {
+    QualType Underlying = Context.getLValueReferenceType(BaseType.getCanonicalType());
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::AddLValueType);
+  }
+  case UnaryTransformType::AddRValueType: {
+    QualType Underlying = Context.getRValueReferenceType(BaseType.getCanonicalType());
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::AddRValueType);
+  }
+  case UnaryTransformType::RemoveReferenceType: {
+    QualType Underlying = BaseType.getNonReferenceType();
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::RemoveReferenceType);
+  }
   }
   llvm_unreachable("unknown unary transform type");
 }

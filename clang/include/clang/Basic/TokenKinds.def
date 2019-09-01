@@ -485,8 +485,10 @@ TYPE_TRAIT_1(__is_trivially_copyable, IsTriviallyCopyable, KEYCXX)
 TYPE_TRAIT_1(__is_union, IsUnion, KEYCXX)
 TYPE_TRAIT_1(__has_unique_object_representations,
              HasUniqueObjectRepresentations, KEYCXX)
-KEYWORD(__underlying_type           , KEYCXX)
+KEYWORD(__underlying_type                  , KEYCXX)
 KEYWORD(__add_lvalue_reference             , KEYCXX)
+KEYWORD(__add_rvalue_reference             , KEYCXX)
+KEYWORD(__remove_reference                 , KEYCXX)
 
 // Clang-only C++ Type Traits
 TYPE_TRAIT_2(__reference_binds_to_temporary, ReferenceBindsToTemporary, KEYCXX)

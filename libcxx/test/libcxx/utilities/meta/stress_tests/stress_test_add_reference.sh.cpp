@@ -11,10 +11,10 @@
 // The table below compares the compile time and object size for each of the
 // variants listed in the RUN script.
 //
-//  Impl          Compile Time    Object Size
-// -------------------------------------------
-// std::_IsSame:    689.634 ms     356 K
-// std::is_same:  8,129.180 ms     560 K
+//  Impl                       Compile Time      Object Size
+// ----------------------------------------------------------
+// new_add_lvalue_reference:   23,359.202 ms     171 K
+// std::add_lvalue_reference:  73,160.138 ms     201 K
 //
 // RUN: %cxx %flags %compile_flags -c %s -o %S/orig.o -ggdb  -ggnu-pubnames -ftemplate-depth=5000 -ftime-trace -std=c++17
 // RUN: %cxx %flags %compile_flags -c %s -o %S/new.o -ggdb  -ggnu-pubnames -ftemplate-depth=5000 -ftime-trace -std=c++17 -DTEST_NEW
@@ -28,13 +28,24 @@
 template <int N> struct Arg { enum { value = 1 }; };
 
 #ifdef TEST_NEW
-#define ADD_REF std::_AddLValueRef
-#else
-#define ADD_REF std::add_rvalue_reference
-#endif
 
-#define TEST_CASE_NOP()  ADD_REF < Arg< __COUNTER__ > >::type{},
-#define TEST_CASE_TYPE() ADD_REF < Arg< __COUNTER__ > >,
+template <class T>
+struct new_add_lvalue_reference
+{
+  typedef __add_lvalue_reference(T) type;
+};
+
+#define TEST_CASE_NOP()  new_add_lvalue_reference< Arg< __COUNTER__ > >{},
+#define TEST_CASE_TYPE() typename new_add_lvalue_reference< Arg< __COUNTER__ > >::type,
+#define TEST_CASE_RVAL() typename new_add_lvalue_reference< Arg< __COUNTER__ >&& >::type,
+
+#else
+
+#define TEST_CASE_NOP()  std::add_lvalue_reference< Arg< __COUNTER__ > >{},
+#define TEST_CASE_TYPE() typename std::add_lvalue_reference< Arg< __COUNTER__ > >::type,
+#define TEST_CASE_RVAL() typename std::add_lvalue_reference< Arg< __COUNTER__ >&& >::type,
+
+#endif
 
 int sink(...);
 
@@ -43,14 +54,14 @@ int x = sink(
   REPEAT_10000(TEST_CASE_NOP) 42
 );
 
-void Foo( REPEAT_1000(TEST_CASE_TYPE) int) { }
-
-static_assert(__COUNTER__ > 10000, "");
+void Foo( REPEAT_10000(TEST_CASE_TYPE) int) { }
+void Bar( REPEAT_10000(TEST_CASE_RVAL) int) { }
 
 void escape() {
 
 sink(&x);
 sink(&Foo);
+sink(&Bar);
 }
 
 

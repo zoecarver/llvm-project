@@ -3918,6 +3918,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       ParseUnderlyingTypeSpecifier(DS);
       continue;
 
+    case tok::kw___remove_reference:
+    case tok::kw___add_rvalue_reference:
     case tok::kw___add_lvalue_reference:
       ParseAddReferenceTypeSpecifier(DS);
       continue;

@@ -1083,14 +1083,26 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   DS.setTypeofParensRange(T.getRange());
 }
 
+DeclSpec::TST Parser::ReferenceTransformTokToDeclSpec() {
+  switch (Tok.getKind()) {
+  case tok::kw___add_lvalue_reference:
+    return DeclSpec::TST_addLValueReferenceType;
+  case tok::kw___add_rvalue_reference:
+    return DeclSpec::TST_addRValueReferenceType;
+  case tok::kw___remove_reference:
+    return DeclSpec::TST_removeReferenceType;
+  default:
+    assert(false && "Not a reference type specifier");
+  }
+}
+
 void Parser::ParseAddReferenceTypeSpecifier(DeclSpec &DS) {
-  assert(Tok.is(tok::kw___add_lvalue_reference) &&
-         "Not an add reference type specifier");
+  DeclSpec::TST ReferenceTransformTST = ReferenceTransformTokToDeclSpec();
 
   SourceLocation StartLoc = ConsumeToken();
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.expectAndConsume(diag::err_expected_lparen_after,
-                         "__add_lvalue_reference",
+                         "reference manipulation builtin",
                          tok::r_paren)) return;
 
   TypeResult BaseTyResult = ParseTypeName();
@@ -1099,18 +1111,14 @@ void Parser::ParseAddReferenceTypeSpecifier(DeclSpec &DS) {
     return;
   }
 
-  QualType BaseQualTy = BaseTyResult.get().get();
-  QualType RefTy = Actions.getASTContext().getLValueReferenceType(BaseQualTy.getCanonicalType());
-  ParsedType RefTyPtr; RefTyPtr.set(RefTy);
-
   T.consumeClose();
   if (T.getCloseLocation().isInvalid()) return;
 
   const char *PrevSpec;
   unsigned DiagID;
-  if (DS.SetTypeSpecType(DeclSpec::TST_addLValueReferenceType,
+  if (DS.SetTypeSpecType(ReferenceTransformTST,
                          StartLoc, PrevSpec,
-                         DiagID, RefTyPtr,
+                         DiagID, BaseTyResult.get(),
                          Actions.getASTContext().getPrintingPolicy())) {
     Diag(StartLoc, DiagID) << PrevSpec;
   }

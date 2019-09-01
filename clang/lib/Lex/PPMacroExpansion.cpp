@@ -1637,6 +1637,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
               .Case("__reference_binds_to_temporary", true)
               .Case("__underlying_type", true)
               .Case("__add_lvalue_reference", true)
+              .Case("__add_rvalue_reference", true)
+              .Case("__remove_reference", true)
               .Default(false);
         } else {
           return llvm::StringSwitch<bool>(II->getName())
