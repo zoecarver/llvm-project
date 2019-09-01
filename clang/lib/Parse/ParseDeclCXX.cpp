@@ -1083,6 +1083,40 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   DS.setTypeofParensRange(T.getRange());
 }
 
+void Parser::ParseAddReferenceTypeSpecifier(DeclSpec &DS) {
+  assert(Tok.is(tok::kw___add_lvalue_reference) &&
+         "Not an add reference type specifier");
+
+  SourceLocation StartLoc = ConsumeToken();
+  BalancedDelimiterTracker T(*this, tok::l_paren);
+  if (T.expectAndConsume(diag::err_expected_lparen_after,
+                         "__add_lvalue_reference",
+                         tok::r_paren)) return;
+
+  TypeResult BaseTyResult = ParseTypeName();
+  if (BaseTyResult.isInvalid()) {
+    SkipUntil(tok::r_paren, StopAtSemi);
+    return;
+  }
+
+  QualType BaseQualTy = BaseTyResult.get().get();
+  QualType RefTy = Actions.getASTContext().getLValueReferenceType(BaseQualTy.getCanonicalType());
+  ParsedType RefTyPtr; RefTyPtr.set(RefTy);
+
+  T.consumeClose();
+  if (T.getCloseLocation().isInvalid()) return;
+
+  const char *PrevSpec;
+  unsigned DiagID;
+  if (DS.SetTypeSpecType(DeclSpec::TST_addLValueReferenceType,
+                         StartLoc, PrevSpec,
+                         DiagID, RefTyPtr,
+                         Actions.getASTContext().getPrintingPolicy())) {
+    Diag(StartLoc, DiagID) << PrevSpec;
+  }
+  DS.setTypeofParensRange(T.getRange());
+}
+
 /// ParseBaseTypeSpecifier - Parse a C++ base-type-specifier which is either a
 /// class name or decltype-specifier. Note that we only check that the result
 /// names a type; semantic analysis will need to verify that the type names a

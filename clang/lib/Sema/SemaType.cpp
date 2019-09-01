@@ -1593,6 +1593,10 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       declarator.setInvalidType(true);
     }
     break;
+  case DeclSpec::TST_addLValueReferenceType:
+    Result = S.GetTypeFromParser(DS.getRepAsType());
+    assert(!Result.isNull() && "__add_lvalue_reference may not have received a type.");
+    break;
 
   case DeclSpec::TST_auto:
     Result = Context.getAutoType(QualType(), AutoTypeKeyword::Auto, false);

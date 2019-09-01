@@ -300,6 +300,7 @@ public:
   static const TST TST_decltype = clang::TST_decltype;
   static const TST TST_decltype_auto = clang::TST_decltype_auto;
   static const TST TST_underlyingType = clang::TST_underlyingType;
+  static const TST TST_addLValueReferenceType = clang::TST_addLValueReferenceType;
   static const TST TST_auto = clang::TST_auto;
   static const TST TST_auto_type = clang::TST_auto_type;
   static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
@@ -408,7 +409,8 @@ private:
 
   static bool isTypeRep(TST T) {
     return (T == TST_typename || T == TST_typeofType ||
-            T == TST_underlyingType || T == TST_atomic);
+            T == TST_underlyingType || T == TST_addLValueReferenceType ||
+            T == TST_atomic);
   }
   static bool isExprRep(TST T) {
     return (T == TST_typeofExpr || T == TST_decltype);

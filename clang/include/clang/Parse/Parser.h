@@ -2602,6 +2602,7 @@ private:
                                          SourceLocation StartLoc,
                                          SourceLocation EndLoc);
   void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
+  void ParseAddReferenceTypeSpecifier(DeclSpec &DS);
   void ParseAtomicSpecifier(DeclSpec &DS);
 
   ExprResult ParseAlignArgument(SourceLocation Start,

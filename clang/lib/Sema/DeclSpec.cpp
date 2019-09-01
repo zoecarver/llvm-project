@@ -553,6 +553,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T,
   case DeclSpec::TST_decltype:    return "(decltype)";
   case DeclSpec::TST_decltype_auto: return "decltype(auto)";
   case DeclSpec::TST_underlyingType: return "__underlying_type";
+  case DeclSpec::TST_addLValueReferenceType: return "__add_lvalue_reference";
   case DeclSpec::TST_unknown_anytype: return "__unknown_anytype";
   case DeclSpec::TST_atomic: return "_Atomic";
 #define GENERIC_IMAGE_TYPE(ImgType, Id) \

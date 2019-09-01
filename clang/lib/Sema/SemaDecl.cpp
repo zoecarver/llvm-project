@@ -140,6 +140,7 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   case tok::kw_wchar_t:
   case tok::kw_bool:
   case tok::kw___underlying_type:
+  case tok::kw___add_lvalue_reference:
   case tok::kw___auto_type:
     return true;
 
@@ -5194,6 +5195,7 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   case DeclSpec::TST_typename:
   case DeclSpec::TST_typeofType:
   case DeclSpec::TST_underlyingType:
+  case DeclSpec::TST_addLValueReferenceType:
   case DeclSpec::TST_atomic: {
     // Grab the type from the parser.
     TypeSourceInfo *TSI = nullptr;
