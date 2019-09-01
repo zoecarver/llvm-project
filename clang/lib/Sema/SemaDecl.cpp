@@ -5198,8 +5198,8 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   case DeclSpec::TST_typeofType:
   case DeclSpec::TST_underlyingType:
   case DeclSpec::TST_addLValueReferenceType:
-  case TST_addRValueReferenceType:
-  case TST_removeReferenceType:
+  case DeclSpec::TST_addRValueReferenceType:
+  case DeclSpec::TST_removeReferenceType:
   case DeclSpec::TST_atomic: {
     // Grab the type from the parser.
     TypeSourceInfo *TSI = nullptr;
