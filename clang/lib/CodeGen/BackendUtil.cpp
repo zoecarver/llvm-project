@@ -224,7 +224,6 @@ static void addSanitizerCoveragePass(const PassManagerBuilder &Builder,
   const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
   auto Opts = getSancovOptsFromCGOpts(CGOpts);
   PM.add(createModuleSanitizerCoverageLegacyPassPass(Opts));
-  PM.add(createSanitizerCoverageLegacyPassPass(Opts));
 }
 
 // Check if ASan should use GC-friendly instrumentation for globals.
@@ -1094,7 +1093,6 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
   std::unique_ptr<TargetLibraryInfoImpl> TLII(
       createTLII(TargetTriple, CodeGenOpts));
   FAM.registerPass([&] { return TargetLibraryAnalysis(*TLII); });
-  MAM.registerPass([&] { return TargetLibraryAnalysis(*TLII); });
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
@@ -1158,11 +1156,6 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
         PB.registerPipelineStartEPCallback(
             [SancovOpts](ModulePassManager &MPM) {
               MPM.addPass(ModuleSanitizerCoveragePass(SancovOpts));
-            });
-        PB.registerOptimizerLastEPCallback(
-            [SancovOpts](FunctionPassManager &FPM,
-                         PassBuilder::OptimizationLevel Level) {
-              FPM.addPass(SanitizerCoveragePass(SancovOpts));
             });
       }
 
@@ -1249,8 +1242,6 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
           CodeGenOpts.SanitizeCoverageTraceCmp) {
         auto SancovOpts = getSancovOptsFromCGOpts(CodeGenOpts);
         MPM.addPass(ModuleSanitizerCoveragePass(SancovOpts));
-        MPM.addPass(createModuleToFunctionPassAdaptor(
-            SanitizerCoveragePass(SancovOpts)));
       }
 
       addSanitizersAtO0(MPM, TargetTriple, LangOpts, CodeGenOpts);
