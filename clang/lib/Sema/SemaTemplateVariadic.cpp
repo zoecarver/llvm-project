@@ -841,6 +841,12 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   case TST_addLValueReferenceType:
   case TST_addRValueReferenceType:
   case TST_removeReferenceType:
+  case TST_removeCV:
+  case TST_removeConst:
+  case TST_removeVolatile:
+  case TST_addCV:
+  case TST_addConst:
+  case TST_addVolatile:
   case TST_atomic: {
     QualType T = DS.getRepAsType().get();
     if (!T.isNull() && T->containsUnexpandedParameterPack())

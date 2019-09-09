@@ -490,6 +490,12 @@ KEYWORD(__underlying_type                  , KEYCXX)
 KEYWORD(__add_lvalue_reference             , KEYCXX)
 KEYWORD(__add_rvalue_reference             , KEYCXX)
 KEYWORD(__remove_reference                 , KEYCXX)
+KEYWORD(__remove_cv                        , KEYCXX)
+KEYWORD(__remove_const                     , KEYCXX)
+KEYWORD(__remove_volatile                  , KEYCXX)
+KEYWORD(__add_cv                           , KEYCXX)
+KEYWORD(__add_const                        , KEYCXX)
+KEYWORD(__add_volatile                     , KEYCXX)
 
 // Clang-only C++ Type Traits
 TYPE_TRAIT_2(__reference_binds_to_temporary, ReferenceBindsToTemporary, KEYCXX)

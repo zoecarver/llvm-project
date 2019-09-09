@@ -842,6 +842,18 @@ public:
     Value.setInt(Value.getInt() | TQs);
   }
 
+  void removeFastQualifiers(unsigned TQs) {
+    assert(!(TQs & ~Qualifiers::FastMask)
+           && "non-fast qualifier bits set in mask!");
+    Value.setInt(0x0);
+  }
+
+  QualType getNonConst() {
+    return withFastQualifiers(Value.getInt() & ~Qualifiers::Const);
+  }
+
+  void removeVolatile();
+
   void removeLocalConst();
   void removeLocalVolatile();
   void removeLocalRestrict();
@@ -4366,7 +4378,13 @@ public:
     EnumUnderlyingType,
     RemoveReferenceType,
     AddRValueType,
-    AddLValueType
+    AddLValueType,
+    RemoveCV,
+    RemoveConst,
+    RemoveVolatile,
+    AddCV,
+    AddConst,
+    AddVolatile
   };
 
 private:
@@ -6240,6 +6258,10 @@ inline SplitQualType QualType::getSplitUnqualifiedType() const {
     return split();
 
   return getSplitUnqualifiedTypeImpl(*this);
+}
+
+inline void QualType::removeVolatile() {
+  removeFastQualifiers(Qualifiers::Volatile);
 }
 
 inline void QualType::removeLocalConst() {

@@ -1262,6 +1262,18 @@ TSTToUnaryTransformType(DeclSpec::TST SwitchTST) {
     return UnaryTransformType::RemoveReferenceType;
   case TST_underlyingType:
     return UnaryTransformType::EnumUnderlyingType;
+  case TST_removeCV:
+    return UnaryTransformType::RemoveCV;
+  case TST_removeConst:
+    return UnaryTransformType::RemoveConst;
+  case TST_removeVolatile:
+    return UnaryTransformType::RemoveVolatile;
+  case TST_addCV:
+    return UnaryTransformType::AddCV;
+  case TST_addConst:
+    return UnaryTransformType::AddConst;
+  case TST_addVolatile:
+    return UnaryTransformType::AddVolatile;
   default:
     assert(false && "Cannot map TST to unary transform type");
   }
@@ -1612,6 +1624,12 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
   case DeclSpec::TST_addLValueReferenceType:
   case DeclSpec::TST_addRValueReferenceType:
   case DeclSpec::TST_removeReferenceType:
+  case DeclSpec::TST_removeCV:
+  case DeclSpec::TST_removeConst:
+  case DeclSpec::TST_removeVolatile:
+  case DeclSpec::TST_addCV:
+  case DeclSpec::TST_addConst:
+  case DeclSpec::TST_addVolatile:
     Result = S.GetTypeFromParser(DS.getRepAsType());
     assert(!Result.isNull() &&
            "Reference manipulation type transform may not have received a type.");
@@ -8428,6 +8446,45 @@ QualType Sema::BuildUnaryTransformType(QualType BaseType,
     QualType Underlying = BaseType.getNonReferenceType();
     return Context.getUnaryTransformType(BaseType, Underlying,
                                          UnaryTransformType::RemoveReferenceType);
+  }
+  case UnaryTransformType::RemoveCV: {
+    QualType Underlying = BaseType.getNonConst();
+    Underlying.removeLocalVolatile();
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::RemoveCV);
+  }
+  case UnaryTransformType::RemoveConst: {
+    QualType Underlying(BaseType.getTypePtr(), 0x2); //.getNonConst();
+//     Underlying.removeFastQualifiers(0x1);
+//     Qualifiers Quals = Underlying.getQualifiers();
+//     Quals.removeConst();
+//     Underlying.setLocalFastQualifiers(Quals.getAsOpaqueValue());
+
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::RemoveConst);
+  }
+  case UnaryTransformType::RemoveVolatile: {
+    QualType Underlying = BaseType;
+    Underlying.removeFastQualifiers(0x1);
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::RemoveVolatile);
+  }
+  case UnaryTransformType::AddCV: {
+    QualType Underlying = BaseType.withConst().withVolatile();
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::AddCV);
+  }
+  case UnaryTransformType::AddConst: {
+//     QualType Underlying = BaseType.withConst();
+    QualType Underlying = BaseType;
+    Underlying.addConst();
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::AddConst);
+  }
+  case UnaryTransformType::AddVolatile: {
+    QualType Underlying = BaseType.withVolatile();
+    return Context.getUnaryTransformType(BaseType, Underlying,
+                                         UnaryTransformType::AddVolatile);
   }
   }
   llvm_unreachable("unknown unary transform type");

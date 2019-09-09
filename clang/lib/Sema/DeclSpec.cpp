@@ -377,6 +377,12 @@ bool Declarator::isDeclarationOfFunction() const {
     case TST_addLValueReferenceType:
     case TST_addRValueReferenceType:
     case TST_removeReferenceType:
+    case TST_removeCV:
+    case TST_removeConst:
+    case TST_removeVolatile:
+    case TST_addCV:
+    case TST_addConst:
+    case TST_addVolatile:
     case TST_typename:
     case TST_typeofType: {
       QualType QT = DS.getRepAsType().get();
@@ -559,6 +565,12 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T,
   case DeclSpec::TST_addLValueReferenceType: return "__add_lvalue_reference";
   case DeclSpec::TST_addRValueReferenceType: return "__add_rvalue_reference";
   case DeclSpec::TST_removeReferenceType: return "__remove_reference";
+  case DeclSpec::TST_removeCV: return "__remove_cv";
+  case DeclSpec::TST_removeConst: return "__remove_const";
+  case DeclSpec::TST_removeVolatile: return "__remove_volatile";
+  case DeclSpec::TST_addCV: return "__add_cv";
+  case DeclSpec::TST_addConst: return "__add_const";
+  case DeclSpec::TST_addVolatile: return "__add_volatile";
   case DeclSpec::TST_unknown_anytype: return "__unknown_anytype";
   case DeclSpec::TST_atomic: return "_Atomic";
 #define GENERIC_IMAGE_TYPE(ImgType, Id) \

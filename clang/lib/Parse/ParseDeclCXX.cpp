@@ -1083,7 +1083,7 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   DS.setTypeofParensRange(T.getRange());
 }
 
-DeclSpec::TST Parser::ReferenceTransformTokToDeclSpec() {
+DeclSpec::TST Parser::TypeTransformTokToDeclSpec() {
   switch (Tok.getKind()) {
   case tok::kw___add_lvalue_reference:
     return DeclSpec::TST_addLValueReferenceType;
@@ -1091,13 +1091,25 @@ DeclSpec::TST Parser::ReferenceTransformTokToDeclSpec() {
     return DeclSpec::TST_addRValueReferenceType;
   case tok::kw___remove_reference:
     return DeclSpec::TST_removeReferenceType;
+  case tok::kw___remove_cv:
+    return DeclSpec::TST_removeCV;
+  case tok::kw___remove_const:
+    return DeclSpec::TST_removeConst;
+  case tok::kw___remove_volatile:
+    return DeclSpec::TST_removeVolatile;
+  case tok::kw___add_cv:
+    return DeclSpec::TST_addCV;
+  case tok::kw___add_const:
+    return DeclSpec::TST_addConst;
+  case tok::kw___add_volatile:
+    return DeclSpec::TST_addVolatile;
   default:
     assert(false && "Not a reference type specifier");
   }
 }
 
-void Parser::ParseAddReferenceTypeSpecifier(DeclSpec &DS) {
-  DeclSpec::TST ReferenceTransformTST = ReferenceTransformTokToDeclSpec();
+void Parser::ParseTypeTransformTypeSpecifier(DeclSpec &DS) {
+  DeclSpec::TST TypeTransformTST = TypeTransformTokToDeclSpec();
 
   SourceLocation StartLoc = ConsumeToken();
   BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -1116,7 +1128,7 @@ void Parser::ParseAddReferenceTypeSpecifier(DeclSpec &DS) {
 
   const char *PrevSpec;
   unsigned DiagID;
-  if (DS.SetTypeSpecType(ReferenceTransformTST,
+  if (DS.SetTypeSpecType(TypeTransformTST,
                          StartLoc, PrevSpec,
                          DiagID, BaseTyResult.get(),
                          Actions.getASTContext().getPrintingPolicy())) {

@@ -91,6 +91,12 @@ namespace clang {
     TST_addLValueReferenceType, // __add_lvalue_reference
     TST_addRValueReferenceType, // __add_rvalue_reference
     TST_removeReferenceType, // __remove_reference
+    TST_removeCV, // __remove_cv
+    TST_removeConst, // __remove_const
+    TST_removeVolatile, // __remove_volatile
+    TST_addCV, // __add_cv
+    TST_addConst, // __add_const
+    TST_addVolatile, // __add_volatile
     TST_auto,             // C++11 auto
     TST_decltype_auto,    // C++1y decltype(auto)
     TST_auto_type,        // __auto_type extension

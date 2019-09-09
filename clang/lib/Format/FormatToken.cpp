@@ -58,6 +58,12 @@ bool FormatToken::isSimpleTypeSpecifier() const {
   case tok::kw___add_lvalue_reference:
   case tok::kw___add_rvalue_reference:
   case tok::kw___remove_reference:
+  case tok::kw___remove_cv:
+  case tok::kw___remove_const:
+  case tok::kw___remove_volatile:
+  case tok::kw___add_cv:
+  case tok::kw___add_const:
+  case tok::kw___add_volatile:
   case tok::annot_typename:
   case tok::kw_char8_t:
   case tok::kw_char16_t:

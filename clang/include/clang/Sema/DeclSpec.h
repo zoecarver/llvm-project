@@ -303,6 +303,12 @@ public:
   static const TST TST_addLValueReferenceType = clang::TST_addLValueReferenceType;
   static const TST TST_addRValueReferenceType = clang::TST_addRValueReferenceType;
   static const TST TST_removeReferenceType = clang::TST_removeReferenceType;
+  static const TST TST_removeCV = clang::TST_removeCV;
+  static const TST TST_removeConst = clang::TST_removeConst;
+  static const TST TST_removeVolatile = clang::TST_removeVolatile;
+  static const TST TST_addCV = clang::TST_addCV;
+  static const TST TST_addConst = clang::TST_addConst;
+  static const TST TST_addVolatile = clang::TST_addVolatile;
   static const TST TST_auto = clang::TST_auto;
   static const TST TST_auto_type = clang::TST_auto_type;
   static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
@@ -413,7 +419,9 @@ private:
     return (T == TST_typename || T == TST_typeofType ||
             T == TST_underlyingType || T == TST_atomic||
             T == TST_addLValueReferenceType || T == TST_addRValueReferenceType ||
-            T == TST_removeReferenceType);
+            T == TST_removeReferenceType ||
+            T == TST_removeCV || T == TST_removeConst || T == TST_removeVolatile ||
+            T == TST_addCV || T == TST_addConst || T == TST_addVolatile);
   }
   static bool isExprRep(TST T) {
     return (T == TST_typeofExpr || T == TST_decltype);

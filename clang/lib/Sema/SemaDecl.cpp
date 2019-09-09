@@ -144,6 +144,12 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   case tok::kw___add_lvalue_reference:
   case tok::kw___add_rvalue_reference:
   case tok::kw___remove_reference:
+  case tok::kw___remove_cv:
+  case tok::kw___remove_const:
+  case tok::kw___remove_volatile:
+  case tok::kw___add_cv:
+  case tok::kw___add_const:
+  case tok::kw___add_volatile:
   case tok::kw___auto_type:
     return true;
 
@@ -5290,6 +5296,12 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   case DeclSpec::TST_addLValueReferenceType:
   case DeclSpec::TST_addRValueReferenceType:
   case DeclSpec::TST_removeReferenceType:
+  case DeclSpec::TST_removeCV:
+  case DeclSpec::TST_removeConst:
+  case DeclSpec::TST_removeVolatile:
+  case DeclSpec::TST_addCV:
+  case DeclSpec::TST_addConst:
+  case DeclSpec::TST_addVolatile:
   case DeclSpec::TST_atomic: {
     // Grab the type from the parser.
     TypeSourceInfo *TSI = nullptr;

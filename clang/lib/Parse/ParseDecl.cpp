@@ -3922,7 +3922,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___remove_reference:
     case tok::kw___add_rvalue_reference:
     case tok::kw___add_lvalue_reference:
-      ParseAddReferenceTypeSpecifier(DS);
+    case tok::kw___remove_cv:
+    case tok::kw___remove_const:
+    case tok::kw___remove_volatile:
+    case tok::kw___add_cv:
+    case tok::kw___add_const:
+    case tok::kw___add_volatile:
+      ParseTypeTransformTypeSpecifier(DS);
       continue;
 
     case tok::kw__Atomic:

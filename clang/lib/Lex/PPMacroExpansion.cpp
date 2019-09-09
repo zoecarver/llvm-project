@@ -1639,6 +1639,12 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
               .Case("__add_lvalue_reference", true)
               .Case("__add_rvalue_reference", true)
               .Case("__remove_reference", true)
+              .Case("__remove_cv", true)
+              .Case("__remove_const", true)
+              .Case("__remove_volatile", true)
+              .Case("__add_cv", true)
+              .Case("__add_const", true)
+              .Case("__add_volatile", true)
               .Default(false);
         } else {
           return llvm::StringSwitch<bool>(II->getName())
