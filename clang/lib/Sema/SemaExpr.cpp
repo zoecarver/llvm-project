@@ -1990,16 +1990,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
       R.clear();
     }
 
-    // In Microsoft mode, if we are performing lookup from within a friend
-    // function definition declared at class scope then we must set
-    // DC to the lexical parent to be able to search into the parent
-    // class.
-    if (getLangOpts().MSVCCompat && isa<FunctionDecl>(DC) &&
-        cast<FunctionDecl>(DC)->getFriendObjectKind() &&
-        DC->getLexicalParent()->isRecord())
-      DC = DC->getLexicalParent();
-    else
-      DC = DC->getParent();
+    DC = DC->getLookupParent();
   }
 
   // We didn't find anything, so try to correct for a typo.
@@ -9167,17 +9158,28 @@ static void DiagnoseDivisionSizeofPointerOrArray(Sema &S, Expr *LHS, Expr *RHS,
   else
     RHSTy = RUE->getArgumentExpr()->IgnoreParens()->getType();
 
-  if (!LHSTy->isPointerType() || RHSTy->isPointerType())
-    return;
-  if (LHSTy->getPointeeType().getCanonicalType().getUnqualifiedType() !=
-      RHSTy.getCanonicalType().getUnqualifiedType())
-    return;
+  if (LHSTy->isPointerType() && !RHSTy->isPointerType()) {
+    if (!S.Context.hasSameUnqualifiedType(LHSTy->getPointeeType(), RHSTy))
+      return;
 
-  S.Diag(Loc, diag::warn_division_sizeof_ptr) << LHS << LHS->getSourceRange();
-  if (const auto *DRE = dyn_cast<DeclRefExpr>(LHSArg)) {
-    if (const ValueDecl *LHSArgDecl = DRE->getDecl())
-      S.Diag(LHSArgDecl->getLocation(), diag::note_pointer_declared_here)
-          << LHSArgDecl;
+    S.Diag(Loc, diag::warn_division_sizeof_ptr) << LHS << LHS->getSourceRange();
+    if (const auto *DRE = dyn_cast<DeclRefExpr>(LHSArg)) {
+      if (const ValueDecl *LHSArgDecl = DRE->getDecl())
+        S.Diag(LHSArgDecl->getLocation(), diag::note_pointer_declared_here)
+            << LHSArgDecl;
+    }
+  } else if (const auto *ArrayTy = S.Context.getAsArrayType(LHSTy)) {
+    QualType ArrayElemTy = ArrayTy->getElementType();
+    if (ArrayElemTy->isDependentType() || RHSTy->isDependentType() ||
+        S.Context.getTypeSize(ArrayElemTy) == S.Context.getTypeSize(RHSTy))
+      return;
+    S.Diag(Loc, diag::warn_division_sizeof_array)
+        << LHSArg->getSourceRange() << ArrayElemTy << RHSTy;
+    if (const auto *DRE = dyn_cast<DeclRefExpr>(LHSArg)) {
+      if (const ValueDecl *LHSArgDecl = DRE->getDecl())
+        S.Diag(LHSArgDecl->getLocation(), diag::note_array_declared_here)
+            << LHSArgDecl;
+    }
   }
 }
 

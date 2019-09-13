@@ -3245,6 +3245,17 @@ match what was already there. However, a store *to* an undefined
 location could clobber arbitrary memory, therefore, it has undefined
 behavior.
 
+**MemorySanitizer**, a detector of uses of uninitialized memory,
+defines a branch with condition that depends on an undef value (or
+certain other values, like e.g. a result of a load from heap-allocated
+memory that has never been stored to) to have an externally visible
+side effect. For this reason functions with *sanitize_memory*
+attribute are not allowed to produce such branches "out of thin
+air". More strictly, an optimization that inserts a conditional branch
+is only valid if in all executions where the branch condition has at
+least one undefined bit, the same branch condition is evaluated in the
+input IR as well.
+
 .. _poisonvalues:
 
 Poison Values
@@ -12062,6 +12073,8 @@ trapping or setting ``errno``.
 When specified with the fast-math-flag 'afn', the result may be approximated
 using a less accurate calculation.
 
+.. _int_fma:
+
 '``llvm.fma.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -13941,8 +13954,8 @@ The expression:
 is equivalent to the expression a \* b + c, except that rounding will
 not be performed between the multiplication and addition steps if the
 code generator fuses the operations. Fusion is not guaranteed, even if
-the target platform supports it. If a fused multiply-add is required the
-corresponding llvm.fma.\* intrinsic function should be used
+the target platform supports it. If a fused multiply-add is required, the
+corresponding :ref:`llvm.fma <int_fma>` intrinsic function should be used
 instead. This never sets errno, just as '``llvm.fma.*``'.
 
 Examples:
