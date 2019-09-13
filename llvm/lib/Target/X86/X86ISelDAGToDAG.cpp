@@ -752,7 +752,7 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
     return false;
   LoadSDNode *LD = dyn_cast<LoadSDNode>(Callee.getNode());
   if (!LD ||
-      LD->isVolatile() ||
+      !LD->isSimple() ||
       LD->getAddressingMode() != ISD::UNINDEXED ||
       LD->getExtensionType() != ISD::NON_EXTLOAD)
     return false;
@@ -2311,10 +2311,10 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root, SDNode *Parent,
     return false;
 
   // We can allow a full vector load here since narrowing a load is ok unless
-  // it's volatile.
+  // it's volatile or atomic.
   if (ISD::isNON_EXTLoad(N.getNode())) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
-    if (!LD->isVolatile() &&
+    if (LD->isSimple() &&
         IsProfitableToFold(N, LD, Root) &&
         IsLegalToFold(N, Parent, Root, OptLevel)) {
       PatternNodeWithChain = N;
@@ -3797,15 +3797,18 @@ bool X86DAGToDAGISel::combineIncDecVector(SDNode *Node) {
     return false;
 
   SDLoc DL(Node);
-  SDValue AllOnesVec;
+  SDValue OneConstant, AllOnesVec;
 
   APInt Ones = APInt::getAllOnesValue(32);
   assert(VT.getSizeInBits() % 32 == 0 &&
          "Expected bit count to be a multiple of 32");
+  OneConstant = CurDAG->getConstant(Ones, DL, MVT::i32);
+  insertDAGNode(*CurDAG, X, OneConstant);
+
   unsigned NumElts = VT.getSizeInBits() / 32;
   assert(NumElts > 0 && "Expected to get non-empty vector.");
-  AllOnesVec =
-      CurDAG->getConstant(Ones, DL, MVT::getVectorVT(MVT::i32, NumElts));
+  AllOnesVec = CurDAG->getSplatBuildVector(MVT::getVectorVT(MVT::i32, NumElts),
+                                           DL, OneConstant);
   insertDAGNode(*CurDAG, X, AllOnesVec);
 
   AllOnesVec = CurDAG->getBitcast(VT, AllOnesVec);

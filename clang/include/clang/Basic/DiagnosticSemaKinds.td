@@ -3406,6 +3406,10 @@ def note_pointer_declared_here : Note<
 def warn_division_sizeof_ptr : Warning<
   "'%0' will return the size of the pointer, not the array itself">,
   InGroup<DiagGroup<"sizeof-pointer-div">>;
+def warn_division_sizeof_array : Warning<
+  "expression does not compute the number of elements in this array; element "
+  "type is %0, not %1">,
+  InGroup<DiagGroup<"sizeof-array-div">>;
 
 def note_function_warning_silence : Note<
     "prefix with the address-of operator to silence this warning">;
@@ -3920,10 +3924,7 @@ def note_implicit_member_target_infer_collision : Note<
 
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion %diff{of $ to $|between types}0,1">;
-def note_ovl_builtin_binary_candidate : Note<
-    "built-in candidate %0">;
-def note_ovl_builtin_unary_candidate : Note<
-    "built-in candidate %0">;
+def note_ovl_builtin_candidate : Note<"built-in candidate %0">;
 def err_ovl_no_viable_function_in_init : Error<
   "no matching constructor for initialization of %0">;
 def err_ovl_no_conversion_in_cast : Error<
@@ -9093,7 +9094,7 @@ def ext_omp_loop_not_canonical_init : ExtWarn<
   "('var = init' or 'T var = init')">, InGroup<OpenMPLoopForm>;
 def err_omp_loop_not_canonical_cond : Error<
   "condition of OpenMP for loop must be a relational comparison "
-  "('<', '<=', '>', or '>=') of loop variable %0">;
+	"('<', '<=', '>', %select{or '>='|'>=', or '!='}0) of loop variable %1">;
 def err_omp_loop_not_canonical_incr : Error<
   "increment clause of OpenMP for loop must perform simple addition "
   "or subtraction on loop variable %0">;
