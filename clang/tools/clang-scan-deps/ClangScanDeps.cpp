@@ -150,13 +150,14 @@ static llvm::cl::opt<ScanningMode> ScanMode(
         clEnumValN(ScanningMode::CanonicalPreprocessing, "preprocess",
                    "The set of dependencies is computed by preprocessing the "
                    "unmodified source files")),
-    llvm::cl::init(ScanningMode::MinimizedSourcePreprocessing));
+    llvm::cl::init(ScanningMode::MinimizedSourcePreprocessing),
+    llvm::cl::cat(DependencyScannerCategory));
 
 llvm::cl::opt<unsigned>
     NumThreads("j", llvm::cl::Optional,
                llvm::cl::desc("Number of worker threads to use (default: use "
                               "all concurrent threads)"),
-               llvm::cl::init(0));
+               llvm::cl::init(0), llvm::cl::cat(DependencyScannerCategory));
 
 llvm::cl::opt<std::string>
     CompilationDB("compilation-database",
@@ -175,6 +176,11 @@ llvm::cl::opt<bool> SkipExcludedPPRanges(
         "bumping the buffer pointer in the lexer instead of lexing the tokens  "
         "until reaching the end directive."),
     llvm::cl::init(true), llvm::cl::cat(DependencyScannerCategory));
+
+llvm::cl::opt<bool> Verbose("v", llvm::cl::Optional,
+                            llvm::cl::desc("Use verbose output."),
+                            llvm::cl::init(false),
+                            llvm::cl::cat(DependencyScannerCategory));
 
 } // end anonymous namespace
 
@@ -241,6 +247,7 @@ int main(int argc, const char **argv) {
         AdjustedArgs.push_back("-o");
         AdjustedArgs.push_back("/dev/null");
         if (!HasMT && !HasMQ) {
+          AdjustedArgs.push_back("-M");
           AdjustedArgs.push_back("-MT");
           // We're interested in source dependencies of an object file.
           if (!HasMD) {
@@ -282,8 +289,10 @@ int main(int argc, const char **argv) {
   std::mutex Lock;
   size_t Index = 0;
 
-  llvm::outs() << "Running clang-scan-deps on " << Inputs.size()
-               << " files using " << NumWorkers << " workers\n";
+  if (Verbose) {
+    llvm::outs() << "Running clang-scan-deps on " << Inputs.size()
+                 << " files using " << NumWorkers << " workers\n";
+  }
   for (unsigned I = 0; I < NumWorkers; ++I) {
     auto Worker = [I, &Lock, &Index, &Inputs, &HadErrors, &WorkerTools]() {
       while (true) {

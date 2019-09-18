@@ -1103,7 +1103,7 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
-    bool reduceSelectOfFPConstantLoads(bool IsFPSetCC) const override;
+    bool reduceSelectOfFPConstantLoads(EVT CmpOpVT) const override;
 
     bool convertSelectOfConstantsToMath(EVT VT) const override;
 
@@ -1202,6 +1202,10 @@ namespace llvm {
     unsigned getNumRegistersForCallingConv(LLVMContext &Context,
                                            CallingConv::ID CC,
                                            EVT VT) const override;
+
+    unsigned getVectorTypeBreakdownForCallingConv(
+        LLVMContext &Context, CallingConv::ID CC, EVT VT, EVT &IntermediateVT,
+        unsigned &NumIntermediates, MVT &RegisterVT) const override;
 
     bool isIntDivCheap(EVT VT, AttributeList Attr) const override;
 
