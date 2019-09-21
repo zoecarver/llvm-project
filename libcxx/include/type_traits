@@ -825,18 +825,23 @@ template <>          struct __libcpp_is_integral<__uint128_t>        : public tr
 template <class _Tp>
 using is_integral = _BoolConstant<__is_integral(_Tp)>;
 
+#if _LIBCPP_STD_VER > 14
+template <class _Tp>
+_LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_integral_v = __is_integral(_Tp);
+#endif
+
 #else
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_integral
     : public __libcpp_is_integral<typename remove_cv<_Tp>::type> {};
-
-#endif // __has_keyword(__is_integral)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_integral_v
     = is_integral<_Tp>::value;
 #endif
+
+#endif // __has_keyword(__is_integral)
 
 // is_floating_point
 
@@ -850,18 +855,23 @@ template <>          struct __libcpp_is_floating_point<long double> : public tru
 template <class _Tp>
 using is_floating_point = _BoolConstant<__is_floating_point(_Tp)>;
 
+#if _LIBCPP_STD_VER > 14
+template <class _Tp>
+_LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_floating_point_v = __is_floating_point(_Tp);
+#endif
+
 #else
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_floating_point
     : public __libcpp_is_floating_point<typename remove_cv<_Tp>::type> {};
-
-#endif // __has_keyword(__is_floating_point)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_floating_point_v
     = is_floating_point<_Tp>::value;
 #endif
+
+#endif // __has_keyword(__is_floating_point)
 
 // is_array
 
@@ -900,8 +910,17 @@ template <class _Tp> struct __libcpp_remove_objc_qualifiers<_Tp __autoreleasing>
 template <class _Tp> struct __libcpp_remove_objc_qualifiers<_Tp __unsafe_unretained> { typedef _Tp type; };
 #endif
 
+#if __has_keyword(__is_pointer)
+
+template<class _Tp>
+using is_pointer = _BoolConstant<__is_pointer(_Tp)>;
+
+#else // __has_keyword(__is_pointer)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_pointer
     : public __libcpp_is_pointer<typename __libcpp_remove_objc_qualifiers<typename remove_cv<_Tp>::type>::type> {};
+
+#endif // __has_keyword(__is_pointer)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -910,6 +929,21 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_pointer_v
 #endif
 
 // is_reference
+
+#if __has_keyword(__is_lvalue_reference) && \
+    __has_keyword(is_rvalue_reference) && \
+    __has_keyword(is_reference)
+
+template<class _Tp>
+using is_lvalue_reference = _BoolConstant<__is_lvalue_reference(_Tp)>;
+
+template<class _Tp>
+using is_rvalue_reference = _BoolConstant<__is_rvalue_reference(_Tp)>;
+
+template<class _Tp>
+using is_reference = _BoolConstant<__is_reference(_Tp)>;
+
+#else // __has_keyword(__is_lvalue_reference) && etc...
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_lvalue_reference       : public false_type {};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_lvalue_reference<_Tp&> : public true_type {};
@@ -920,6 +954,8 @@ template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_rvalue_reference<_Tp&&> : pu
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_reference        : public false_type {};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_reference<_Tp&>  : public true_type {};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_reference<_Tp&&> : public true_type {};
+
+#endif // __has_keyword(__is_lvalue_reference) && etc...
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -934,6 +970,7 @@ template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_rvalue_reference_v
     = is_rvalue_reference<_Tp>::value;
 #endif
+
 // is_union
 
 #if __has_feature(is_union) || defined(_LIBCPP_COMPILER_GCC)
@@ -1014,9 +1051,17 @@ template <class _Tp, class _Up> struct __libcpp_is_member_pointer<_Tp _Up::*> {
   };
 };
 
+#if __has_keyword(__is_member_function_pointer)
+
+template<class _Tp>
+using is_member_function_pointer = _BoolConstant<__is_member_function_pointer(_Tp)>;
+
+#else // __has_keyword(__is_member_function_pointer)
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_member_function_pointer
     : public _BoolConstant< __libcpp_is_member_pointer<typename remove_cv<_Tp>::type>::__is_func > {};
+
+#endif // __has_keyword(__is_member_function_pointer)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1026,8 +1071,17 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_member_function_pointer_v
 
 // is_member_pointer
 
+#if __has_keyword(__is_member_pointer)
+
+template<class _Tp>
+using is_member_pointer = _BoolConstant<__is_member_pointer(_Tp)>;
+
+#else // __has_keyword(__is_member_pointer)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_member_pointer
  : public _BoolConstant< __libcpp_is_member_pointer<typename remove_cv<_Tp>::type>::__is_member > {};
+
+ #endif // __has_keyword(__is_member_pointer)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1037,8 +1091,17 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_member_pointer_v
 
 // is_member_object_pointer
 
+#if __has_keyword(__is_member_object_pointer)
+
+template<class _Tp>
+using is_member_object_pointer = _BoolConstant<__is_member_object_pointer(_Tp)>;
+
+#else // __has_keyword(__is_member_object_pointer)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_member_object_pointer
     : public _BoolConstant< __libcpp_is_member_pointer<typename remove_cv<_Tp>::type>::__is_obj >  {};
+
+#endif // __has_keyword(__is_member_object_pointer)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1077,9 +1140,18 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_enum_v
 
 // is_arithmetic
 
+#if __has_keyword(__is_arithmetic)
+
+template<class _Tp>
+using is_arithmetic = _BoolConstant<__is_arithmetic(_Tp)>;
+
+#else // __has_keyword(__is_arithmetic)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_arithmetic
     : public integral_constant<bool, is_integral<_Tp>::value      ||
                                      is_floating_point<_Tp>::value> {};
+
+#endif // __has_keyword(__is_arithmetic)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1089,10 +1161,19 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_arithmetic_v
 
 // is_fundamental
 
+#if __has_keyword(__is_fundamental) && false // TODO: fix this builtin
+
+template<class _Tp>
+using is_fundamental = _BoolConstant<__is_fundamental(_Tp)>;
+
+#else // __has_keyword(__is_fundamental)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_fundamental
     : public integral_constant<bool, is_void<_Tp>::value        ||
                                      __is_nullptr_t<_Tp>::value ||
                                      is_arithmetic<_Tp>::value> {};
+
+#endif // __has_keyword(__is_fundamental)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1101,6 +1182,13 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_fundamental_v
 #endif
 
 // is_scalar
+
+#if __has_keyword(__is_scalar)
+
+template<class _Tp>
+using is_scalar = _BoolConstant<__is_scalar(_Tp)>;
+
+#else // __has_keyword(__is_scalar)
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_scalar
     : public integral_constant<bool, is_arithmetic<_Tp>::value     ||
@@ -1111,6 +1199,8 @@ template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_scalar
 
 template <> struct _LIBCPP_TEMPLATE_VIS is_scalar<nullptr_t> : public true_type {};
 
+#endif // __has_keyword(__is_scalar)
+
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_scalar_v
@@ -1119,11 +1209,20 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_scalar_v
 
 // is_object
 
+#if __has_keyword(__is_object)
+
+template<class _Tp>
+using is_object = _BoolConstant<__is_object(_Tp)>;
+
+#else // __has_keyword(__is_object)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_object
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_array<_Tp>::value  ||
                                      is_union<_Tp>::value  ||
                                      is_class<_Tp>::value  > {};
+
+#endif // __has_keyword(__is_object)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1133,8 +1232,17 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_object_v
 
 // is_compound
 
+#if __has_keyword(__is_compound)
+
+template<class _Tp>
+using is_compound = _BoolConstant<__is_compound(_Tp)>;
+
+#else // __has_keyword(__is_compound)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_compound
     : public integral_constant<bool, !is_fundamental<_Tp>::value> {};
+
+#endif // __has_keyword(__is_compound)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1186,9 +1294,18 @@ template <class _Tp> using add_cv_t = typename add_cv<_Tp>::type;
 
 // remove_reference
 
+#if __has_keyword(__remove_reference)
+
+template<class _Tp>
+struct remove_reference { typedef __remove_reference(_Tp) type; };
+
+#else // __has_keyword(__remove_reference)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS remove_reference        {typedef _LIBCPP_NODEBUG_TYPE _Tp type;};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS remove_reference<_Tp&>  {typedef _LIBCPP_NODEBUG_TYPE _Tp type;};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS remove_reference<_Tp&&> {typedef _LIBCPP_NODEBUG_TYPE _Tp type;};
+
+#endif // __has_keyword(__remove_reference)
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> using remove_reference_t = typename remove_reference<_Tp>::type;
@@ -1196,21 +1313,41 @@ template <class _Tp> using remove_reference_t = typename remove_reference<_Tp>::
 
 // add_lvalue_reference
 
+#if __has_keyword(__add_lvalue_reference)
+
+template<class _Tp>
+struct add_lvalue_reference { typedef __add_lvalue_reference(_Tp) type; };
+
+#else // __has_keyword(__add_lvalue_reference)
+
 template <class _Tp, bool = __is_referenceable<_Tp>::value> struct __add_lvalue_reference_impl            { typedef _LIBCPP_NODEBUG_TYPE _Tp  type; };
 template <class _Tp                                       > struct __add_lvalue_reference_impl<_Tp, true> { typedef _LIBCPP_NODEBUG_TYPE _Tp& type; };
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS add_lvalue_reference
 {typedef _LIBCPP_NODEBUG_TYPE typename  __add_lvalue_reference_impl<_Tp>::type type;};
 
+#endif // __has_keyword(__add_lvalue_reference)
+
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> using add_lvalue_reference_t = typename add_lvalue_reference<_Tp>::type;
 #endif
+
+// add_rvalue_reference
+
+#if __has_keyword(__add_rvalue_reference)
+
+template<class _Tp>
+struct add_rvalue_reference { typedef __add_rvalue_reference(_Tp) type; };
+
+#else // __has_keyword(__add_rvalue_reference)
 
 template <class _Tp, bool = __is_referenceable<_Tp>::value> struct __add_rvalue_reference_impl            { typedef _LIBCPP_NODEBUG_TYPE  _Tp   type; };
 template <class _Tp                                       > struct __add_rvalue_reference_impl<_Tp, true> { typedef _LIBCPP_NODEBUG_TYPE  _Tp&& type; };
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS add_rvalue_reference
 {typedef _LIBCPP_NODEBUG_TYPE  typename __add_rvalue_reference_impl<_Tp>::type type;};
+
+#endif // __has_keyword(__add_rvalue_reference)
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> using add_rvalue_reference_t = typename add_rvalue_reference<_Tp>::type;
@@ -1297,6 +1434,13 @@ template<class _Tp> using type_identity_t = typename type_identity<_Tp>::type;
 
 // is_signed
 
+#if __has_keyword(__is_signed)
+
+template<class _Tp>
+using is_signed = _BoolConstant<__is_signed(_Tp)>;
+
+#else // __has_keyword(__is_signed)
+
 template <class _Tp, bool = is_integral<_Tp>::value>
 struct __libcpp_is_signed_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(-1) < _Tp(0)) {};
 
@@ -1310,6 +1454,8 @@ template <class _Tp> struct __libcpp_is_signed<_Tp, false> : public false_type {
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_signed : public __libcpp_is_signed<_Tp> {};
 
+#endif // __has_keyword(__is_signed)
+
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_signed_v
@@ -1317,6 +1463,13 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_signed_v
 #endif
 
 // is_unsigned
+
+#if __has_keyword(__is_unsigned)
+
+template<class _Tp>
+using is_unsigned = _BoolConstant<__is_unsigned(_Tp)>;
+
+#else // __has_keyword(__is_unsigned)
 
 template <class _Tp, bool = is_integral<_Tp>::value>
 struct __libcpp_is_unsigned_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(0) < _Tp(-1)) {};
@@ -1331,6 +1484,8 @@ template <class _Tp> struct __libcpp_is_unsigned<_Tp, false> : public false_type
 
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS is_unsigned : public __libcpp_is_unsigned<_Tp> {};
 
+#endif // __has_keyword(__is_unsigned)
+
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
 _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_unsigned_v
@@ -1339,12 +1494,21 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_unsigned_v
 
 // rank
 
+#if __has_keyword(__array_rank)
+
+template<class _Tp>
+using rank = integral_constant<size_t, __array_rank(_Tp)>;
+
+#else // __has_keyword(__array_rank)
+
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS rank
     : public integral_constant<size_t, 0> {};
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS rank<_Tp[]>
     : public integral_constant<size_t, rank<_Tp>::value + 1> {};
 template <class _Tp, size_t _Np> struct _LIBCPP_TEMPLATE_VIS rank<_Tp[_Np]>
     : public integral_constant<size_t, rank<_Tp>::value + 1> {};
+
+#endif // __has_keyword(__array_rank)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
@@ -1353,6 +1517,13 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR size_t rank_v
 #endif
 
 // extent
+
+#if __has_keyword(__array_extent)
+
+template<class _Tp, size_t _Dim = 0>
+using extent = integral_constant<size_t, __array_extent(_Tp, _Dim)>;
+
+#else // __has_keyword(__array_extent)
 
 template <class _Tp, unsigned _Ip = 0> struct _LIBCPP_TEMPLATE_VIS extent
     : public integral_constant<size_t, 0> {};
@@ -1364,6 +1535,8 @@ template <class _Tp, size_t _Np> struct _LIBCPP_TEMPLATE_VIS extent<_Tp[_Np], 0>
     : public integral_constant<size_t, _Np> {};
 template <class _Tp, size_t _Np, unsigned _Ip> struct _LIBCPP_TEMPLATE_VIS extent<_Tp[_Np], _Ip>
     : public integral_constant<size_t, extent<_Tp, _Ip-1>::value> {};
+
+#endif // __has_keyword(__array_extent)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp, unsigned _Ip = 0>
@@ -2217,6 +2390,13 @@ template <class ..._Tp> using common_type_t = typename common_type<_Tp...>::type
 
 template<typename, typename _Tp> struct __select_2nd { typedef _LIBCPP_NODEBUG_TYPE _Tp type; };
 
+#if __has_keyword(__is_assignable)
+
+template<class _Tp, class _Up>
+using is_assignable = _BoolConstant<__is_assignable(_Tp, _Up)>;
+
+#else // __has_keyword(__is_assignable)
+
 template <class _Tp, class _Arg>
 typename __select_2nd<decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>())), true_type>::type
 __is_assignable_test(int);
@@ -2238,6 +2418,8 @@ struct __is_assignable_imp<_Tp, _Arg, true>
 template <class _Tp, class _Arg>
 struct is_assignable
     : public __is_assignable_imp<_Tp, _Arg> {};
+
+#endif  // __has_keyword(__is_assignable)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp, class _Arg>
@@ -2270,6 +2452,13 @@ _LIBCPP_INLINE_VAR _LIBCPP_CONSTEXPR bool is_move_assignable_v
 #endif
 
 // is_destructible
+
+#if __has_keyword(__is_destructible)
+
+template<class _Tp>
+using is_destructible = _BoolConstant<__is_destructible(_Tp)>;
+
+#else // __has_keyword(__is_destructible)
 
 //  if it's a reference, return true
 //  if it's a function, return false
@@ -2326,6 +2515,8 @@ struct is_destructible<_Tp[]>
 template <>
 struct is_destructible<void>
     : public _VSTD::false_type {};
+
+#endif // __has_keyword(__is_destructible)
 
 #if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NO_VARIABLE_TEMPLATES)
 template <class _Tp>
