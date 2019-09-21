@@ -1870,12 +1870,12 @@ Preprocessor::ImportAction Preprocessor::HandleHeaderIncludeOrImport(
   SourceLocation StartLoc = IsImportDecl ? IncludeTok.getLocation() : HashLoc;
 
   // Complain about attempts to #include files in an audit pragma.
-  if (PragmaARCCFCodeAuditedLoc.isValid()) {
+  if (PragmaARCCFCodeAuditedInfo.second.isValid()) {
     Diag(StartLoc, diag::err_pp_include_in_arc_cf_code_audited) << IsImportDecl;
-    Diag(PragmaARCCFCodeAuditedLoc, diag::note_pragma_entered_here);
+    Diag(PragmaARCCFCodeAuditedInfo.second, diag::note_pragma_entered_here);
 
     // Immediately leave the pragma.
-    PragmaARCCFCodeAuditedLoc = SourceLocation();
+    PragmaARCCFCodeAuditedInfo = {nullptr, SourceLocation()};
   }
 
   // Complain about attempts to #include files in an assume-nonnull pragma.
@@ -2782,7 +2782,8 @@ void Preprocessor::HandleDefineDirective(
   // If we need warning for not using the macro, add its location in the
   // warn-because-unused-macro set. If it gets used it will be removed from set.
   if (getSourceManager().isInMainFile(MI->getDefinitionLoc()) &&
-      !Diags->isIgnored(diag::pp_macro_not_used, MI->getDefinitionLoc())) {
+      !Diags->isIgnored(diag::pp_macro_not_used, MI->getDefinitionLoc()) &&
+      !MacroExpansionInDirectivesOverride) {
     MI->setIsWarnIfUnused(true);
     WarnUnusedMacroLocs.insert(MI->getDefinitionLoc());
   }
