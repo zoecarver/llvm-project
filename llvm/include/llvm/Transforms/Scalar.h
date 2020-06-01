@@ -523,6 +523,13 @@ Pass *createLoopSimplifyCFGPass();
 // transformations.
 //
 Pass *createWarnMissedTransformationsPass();
+
+//===----------------------------------------------------------------------===//
+//
+// SmartPtrLifetime - This pass performs basic memory lifetime optimizations on C
+// ++ smart pointers.
+//
+FunctionPass *createSmartPtrLifetimePass();
 } // End llvm namespace
 
 #endif

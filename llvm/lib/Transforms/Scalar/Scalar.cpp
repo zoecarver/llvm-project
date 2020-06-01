@@ -112,6 +112,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeLoopVersioningPassPass(Registry);
   initializeEntryExitInstrumenterPass(Registry);
   initializePostInlineEntryExitInstrumenterPass(Registry);
+  initializeSmartPtrLifetimePass(Registry);
 }
 
 void LLVMAddLoopSimplifyCFGPass(LLVMPassManagerRef PM) {
@@ -297,4 +298,8 @@ void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM) {
 
 void LLVMAddUnifyFunctionExitNodesPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createUnifyFunctionExitNodesPass());
+}
+
+void LLVMAddSmartPtrLifetimePass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createSmartPtrLifetimePass());
 }

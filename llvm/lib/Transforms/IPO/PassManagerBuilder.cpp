@@ -602,6 +602,8 @@ void PassManagerBuilder::populateModulePassManager(
   // for the entire SCC pass run below.
   MPM.add(createGlobalsAAWrapperPass());
 
+  MPM.add(createSmartPtrLifetimePass());
+
   // Start of CallGraph SCC passes.
   MPM.add(createPruneEHPass()); // Remove dead EH info
   bool RunInliner = false;
