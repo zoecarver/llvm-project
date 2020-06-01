@@ -10,33 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar/DeadStoreElimination.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
-#include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Analysis/MemoryLocation.h"
-#include "llvm/Analysis/MemorySSA.h"
-#include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constant.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
@@ -51,29 +32,15 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/DebugCounter.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/AssumeBundleBuilder.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <iterator>
-#include <map>
-#include <utility>
 
 using namespace llvm;
 
 #define DEBUG_TYPE "smart-ptr-lifetime-opts"
 
-STATISTIC(NumUniquePtrDestructorsRemoved, "Number of unique_ptr destructors that were able to be removed");
-
+STATISTIC(NumUniquePtrDestructorsRemoved,
+          "Number of unique_ptr destructors that were able to be removed");
 
 //===----------------------------------------------------------------------===//
 //
@@ -89,11 +56,7 @@ enum class Lifetime {
 };
 
 /// Various known functions we will use to classify call instructions.
-enum class KnownFunc {
-  Unknown,
-  MoveConst,
-  Destructor
-};
+enum class KnownFunc { Unknown, MoveConst, Destructor };
 
 /// Classify a function based on the functions \p Name.
 static KnownFunc lookupFunc(StringRef Name) {
@@ -108,37 +71,40 @@ static KnownFunc lookupFunc(StringRef Name) {
   return KnownFunc::Unknown;
 }
 
-/// Set the lifetime of the unique_ptr move constructor arguments. The arguments are from the move
-/// constructor, \p Call. The lifetime information is stored in \p LifetimeLookup.
+/// Set the lifetime of the unique_ptr move constructor arguments. The arguments
+/// are from the move constructor, \p Call. The lifetime information is stored
+/// in \p LifetimeLookup.
 ///
-/// The "To" argument (first) is "moved to" meaning it is live but also, if the next use of the value "To" is a call,
-/// we know that call will call the destructor.
+/// The "To" argument (first) is "moved to" meaning it is live but also, if the
+/// next use of the value "To" is a call, we know that call will call the
+/// destructor.
 ///
-/// The "From" argument (second) is "empty" meaning the pointer is a nullptr. In this case, the following
-/// destructor will be a noop so we can remove it. TODO: in the future, we can null-out the unique_ptr here
-/// which may help later optimization passes.
+/// The "From" argument (second) is "empty" meaning the pointer is a nullptr. In
+/// this case, the following destructor will be a noop so we can remove it.
+/// TODO: in the future, we can null-out the unique_ptr here which may help
+/// later optimization passes.
 static void mapMoveConstArgs(CallInst *Call,
-                             DenseMap<Value*, Lifetime> &LifetimeLookup) {
+                             DenseMap<Value *, Lifetime> &LifetimeLookup) {
   Value *To = Call->getArgOperand(0);
   Value *From = Call->getArgOperand(1);
   LifetimeLookup[To] = Lifetime::MovedTo;
   LifetimeLookup[From] = Lifetime::Empty;
 }
 
-/// Try to determin if we know the destructor is going to be a noop. The destructor is \p Call. The lifetime
-/// information is stored in \p LifetimeLookup.
+/// Try to determin if we know the destructor is going to be a noop. The
+/// destructor is \p Call. The lifetime information is stored in \p
+/// LifetimeLookup.
 ///
-/// If the lifetime of the pointer is known, and empty, it return true (the destructor is noop). Otherwise, set the
-/// lifetime "Empty" because after this call, the unique_ptr will hold a nullptr and return false.
+/// If the lifetime of the pointer is known, and empty, it return true (the
+/// destructor is noop). Otherwise, set the lifetime "Empty" because after this
+/// call, the unique_ptr will hold a nullptr and return false.
 static bool isDestructorNoop(CallInst *Call,
-                             DenseMap<Value*, Lifetime> &LifetimeLookup) {
+                             DenseMap<Value *, Lifetime> &LifetimeLookup) {
   Value *UniquePtr = Call->getArgOperand(0);
   Lifetime &UniquePtrLifetime = LifetimeLookup[UniquePtr];
   // If we knwo the unique_ptr holds nullptr, the destructor is a noop.
-  if (UniquePtrLifetime == Lifetime::Empty) {
-    // TODO: assert no results.
+  if (UniquePtrLifetime == Lifetime::Empty)
     return true;
-  }
   // Otherwise, mark it as dead.
   UniquePtrLifetime = Lifetime::Empty;
   return false;
@@ -155,8 +121,8 @@ public:
 
   bool runOnFunction(Function &F) override {
     bool Changed = false;
-    SmallVector<Instruction*, 8> DeadInsts;
-    DenseMap<Value*, Lifetime> LifetimeLookup;
+    SmallVector<Instruction *, 8> DeadInsts;
+    DenseMap<Value *, Lifetime> LifetimeLookup;
     for (BasicBlock &Block : F) {
       for (Instruction &Inst : Block) {
         // If this is a call instruction, see if it gives us any lifetime
@@ -166,7 +132,8 @@ public:
           KnownFunc Func = lookupFunc(Name);
           if (Func == KnownFunc::MoveConst) {
             mapMoveConstArgs(Call, LifetimeLookup);
-            // TODO: We can lower the move constructor, replacing it with a store.
+            // TODO: We can lower the move constructor, replacing it with a
+            // store.
             continue;
           } else if (Func == KnownFunc::Destructor) {
             if (isDestructorNoop(Call, LifetimeLookup))
@@ -174,7 +141,8 @@ public:
             continue;
           }
           // If this call uses a value we're keeping track of.
-          for (size_t ArgIdx = 0; ArgIdx < Call->getNumArgOperands(); ++ArgIdx) {
+          for (size_t ArgIdx = 0; ArgIdx < Call->getNumArgOperands();
+               ++ArgIdx) {
             Value *Arg = Call->getArgOperand(ArgIdx);
             auto FoundItr = llvm::find_if(LifetimeLookup, [Arg](auto both) {
               return both.getFirst() == Arg;
@@ -205,17 +173,17 @@ public:
         }
       }
     }
-    
+
     Changed = !DeadInsts.empty();
-    for (Instruction *I : DeadInsts)
+    for (Instruction *I : DeadInsts) {
       I->eraseFromParent();
-    
+      ++NumUniquePtrDestructorsRemoved;
+    }
+
     return Changed;
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    
-  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {}
 };
 
 } // end anonymous namespace

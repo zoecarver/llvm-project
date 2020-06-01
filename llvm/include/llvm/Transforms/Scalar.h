@@ -526,7 +526,8 @@ Pass *createWarnMissedTransformationsPass();
 
 //===----------------------------------------------------------------------===//
 //
-// SmartPtrLifetime - This pass performs basic memory lifetime optimizations on C
+// SmartPtrLifetime - This pass performs basic memory lifetime optimizations on
+// C
 // ++ smart pointers.
 //
 FunctionPass *createSmartPtrLifetimePass();

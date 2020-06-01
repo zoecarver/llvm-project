@@ -232,7 +232,7 @@ namespace {
       (void) llvm::createInjectTLIMappingsLegacyPass();
       (void) llvm::createUnifyLoopExitsPass();
       (void) llvm::createFixIrreduciblePass();
-      (void) llvm::createSmartPtrLifetimePass();
+      (void)llvm::createSmartPtrLifetimePass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolutionWrapperPass();
