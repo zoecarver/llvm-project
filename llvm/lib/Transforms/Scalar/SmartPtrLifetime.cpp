@@ -81,35 +81,56 @@ STATISTIC(NumUniquePtrDestructorsRemoved, "Number of unique_ptr destructors that
 
 namespace {
 
+/// The "Lifetime" state information for memory.
 enum class Lifetime {
   Unknown, // Unkown may be "Live"
   MovedTo,
   Empty // Empty means it was either "MovedFrom" or "Deleted".
 };
 
+/// Various known functions we will use to classify call instructions.
 enum class KnownFunc {
   Unknown,
   MoveConst,
   Destructor
 };
 
-static KnownFunc LookupFunc(StringRef Name) {
-  return StringSwitch<KnownFunc>(Name)
-    .Case("_ZN6my_ptrIiEC1EOS0_", KnownFunc::MoveConst)
-    .Case("_ZN6my_ptrIiED1Ev", KnownFunc::Destructor)
-    .Default(KnownFunc::Unknown);
+/// Classify a function based on the functions \p Name.
+static KnownFunc lookupFunc(StringRef Name) {
+  // Fastpath: because we call lookupFunc on every CallInst. Make sure there's
+  // a semantics tag before we make any other lookups.
+  if (!Name.contains("__SEMANTICS"))
+    return KnownFunc::Unknown;
+  if (Name.contains("__SEMANTICS_unique_ptr_move"))
+    return KnownFunc::MoveConst;
+  if (Name.contains("__SEMANTICS_unique_ptr_destroy"))
+    return KnownFunc::Destructor;
+  return KnownFunc::Unknown;
 }
 
-static void mapAndLowerMoveConst(CallInst *Call,
-                                 DenseMap<Value*, Lifetime> &LifetimeLookup) {
+/// Set the lifetime of the unique_ptr move constructor arguments. The arguments are from the move
+/// constructor, \p Call. The lifetime information is stored in \p LifetimeLookup.
+///
+/// The "To" argument (first) is "moved to" meaning it is live but also, if the next use of the value "To" is a call,
+/// we know that call will call the destructor.
+///
+/// The "From" argument (second) is "empty" meaning the pointer is a nullptr. In this case, the following
+/// destructor will be a noop so we can remove it. TODO: in the future, we can null-out the unique_ptr here
+/// which may help later optimization passes.
+static void mapMoveConstArgs(CallInst *Call,
+                             DenseMap<Value*, Lifetime> &LifetimeLookup) {
   Value *To = Call->getArgOperand(0);
   Value *From = Call->getArgOperand(1);
   LifetimeLookup[To] = Lifetime::MovedTo;
   LifetimeLookup[From] = Lifetime::Empty;
-  // TODO: lower this.
 }
 
-static bool handleDestructor(CallInst *Call,
+/// Try to determin if we know the destructor is going to be a noop. The destructor is \p Call. The lifetime
+/// information is stored in \p LifetimeLookup.
+///
+/// If the lifetime of the pointer is known, and empty, it return true (the destructor is noop). Otherwise, set the
+/// lifetime "Empty" because after this call, the unique_ptr will hold a nullptr and return false.
+static bool isDestructorNoop(CallInst *Call,
                              DenseMap<Value*, Lifetime> &LifetimeLookup) {
   Value *UniquePtr = Call->getArgOperand(0);
   Lifetime &UniquePtrLifetime = LifetimeLookup[UniquePtr];
@@ -138,14 +159,17 @@ public:
     DenseMap<Value*, Lifetime> LifetimeLookup;
     for (BasicBlock &Block : F) {
       for (Instruction &Inst : Block) {
+        // If this is a call instruction, see if it gives us any lifetime
+        // information.
         if (CallInst *Call = dyn_cast<CallInst>(&Inst)) {
           StringRef Name = Call->getCalledFunction()->getName();
-          KnownFunc Func = LookupFunc(Name);
+          KnownFunc Func = lookupFunc(Name);
           if (Func == KnownFunc::MoveConst) {
-            mapAndLowerMoveConst(Call, LifetimeLookup);
+            mapMoveConstArgs(Call, LifetimeLookup);
+            // TODO: We can lower the move constructor, replacing it with a store.
             continue;
           } else if (Func == KnownFunc::Destructor) {
-            if (handleDestructor(Call, LifetimeLookup))
+            if (isDestructorNoop(Call, LifetimeLookup))
               DeadInsts.push_back(Call);
             continue;
           }
@@ -166,17 +190,25 @@ public:
               // Otherwise, we have no idea what might happen to the operand.
               TrackedLifetime = Lifetime::Unknown;
           }
+          // Nothing more to be done with this instruction; continue.
+          continue;
         }
-        // TODO: find if any operands are in lifetime lookup and invalidate them.
+        // If there are any other uses of tracked values, those are unknown so,
+        // assume they make the pointer live (or "Unkown").
+        for (size_t OpIdx = 0; OpIdx < Inst.getNumOperands(); ++OpIdx) {
+          Value *Op = Inst.getOperand(OpIdx);
+          auto FoundItr = llvm::find_if(LifetimeLookup, [Op](auto both) {
+            return both.getFirst() == Op;
+          });
+          if (FoundItr != LifetimeLookup.end())
+            FoundItr->getSecond() = Lifetime::Unknown;
+        }
       }
     }
     
     Changed = !DeadInsts.empty();
-    for (Instruction *I : DeadInsts) {
-      llvm::errs() << "Killed: ";
-      I->dump();
+    for (Instruction *I : DeadInsts)
       I->eraseFromParent();
-    }
     
     return Changed;
   }
