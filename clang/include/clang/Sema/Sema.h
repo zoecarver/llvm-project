@@ -4904,6 +4904,11 @@ public:
                                      Expr *Idx, SourceLocation RLoc);
   ExprResult CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                                              Expr *Idx, SourceLocation RLoc);
+
+  ExprResult CreateBuiltinMatrixSubscriptExpr(Expr *Base, Expr *RowIdx,
+                                              Expr *ColumnIdx,
+                                              SourceLocation RBLoc);
+
   ExprResult ActOnOMPArraySectionExpr(Expr *Base, SourceLocation LBLoc,
                                       Expr *LowerBound, SourceLocation ColonLoc,
                                       Expr *Length, SourceLocation RBLoc);
@@ -11718,6 +11723,10 @@ public:
   /// depending on FD and the current compilation settings.
   void maybeAddCUDAHostDeviceAttrs(FunctionDecl *FD,
                                    const LookupResult &Previous);
+
+  /// May add implicit CUDAConstantAttr attribute to VD, depending on VD
+  /// and current compilation settings.
+  void MaybeAddCUDAConstantAttr(VarDecl *VD);
 
 public:
   /// Check whether we're allowed to call Callee from the current context.
