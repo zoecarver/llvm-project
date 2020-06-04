@@ -2409,7 +2409,7 @@ public:
   unique_ptr(pointer __p, _BadRValRefType<_Dummy> __d) = delete;
 
   _LIBCPP_INLINE_VISIBILITY
-  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move")))
+  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move_const")))
   unique_ptr(unique_ptr&& __u) _NOEXCEPT
       : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {
   }
@@ -2419,7 +2419,7 @@ public:
       class = _EnableIfDeleterConvertible<_Ep>
   >
   _LIBCPP_INLINE_VISIBILITY
-  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move")))
+  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move_const")))
   unique_ptr(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
       : __ptr_(__u.release(), _VSTD::forward<_Ep>(__u.get_deleter())) {}
 
@@ -2655,7 +2655,7 @@ public:
   unique_ptr(_Pp __p, _BadRValRefType<_Dummy> __d) = delete;
 
   _LIBCPP_INLINE_VISIBILITY
-  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move")))
+  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move_const")))
   unique_ptr(unique_ptr&& __u) _NOEXCEPT
       : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {
   }
@@ -2672,7 +2672,7 @@ public:
       class = _EnableIfDeleterConvertible<_Ep>
   >
   _LIBCPP_INLINE_VISIBILITY
-  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move")))
+  __attribute__((abi_tag("__SEMANTICS_unique_ptr_move_const")))
   unique_ptr(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
       : __ptr_(__u.release(), _VSTD::forward<_Ep>(__u.get_deleter())) {
   }
@@ -2762,6 +2762,15 @@ public:
   }
 
 };
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+__attribute__((abi_tag("__SEMANTICS_unique_ptr_global_move")))
+unique_ptr<_Tp>&&
+move(unique_ptr<_Tp>& __t) _NOEXCEPT
+{
+    return static_cast<unique_ptr<_Tp>&&>(__t);
+}
 
 template <class _Tp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY

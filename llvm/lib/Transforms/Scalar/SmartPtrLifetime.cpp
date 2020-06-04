@@ -56,7 +56,7 @@ enum class Lifetime {
 };
 
 /// Various known functions we will use to classify call instructions.
-enum class KnownFunc { Unknown, MoveConst, Destructor };
+enum class KnownFunc { Unknown, GlobalMove, MoveConst, Destructor };
 
 /// Classify a function based on the functions \p Name.
 static KnownFunc lookupFunc(StringRef Name) {
@@ -64,11 +64,24 @@ static KnownFunc lookupFunc(StringRef Name) {
   // a semantics tag before we make any other lookups.
   if (!Name.contains("__SEMANTICS"))
     return KnownFunc::Unknown;
+  if (Name.contains("__SEMANTICS_unique_ptr_global_move"))
+    return KnownFunc::GlobalMove;
   if (Name.contains("__SEMANTICS_unique_ptr_move"))
     return KnownFunc::MoveConst;
   if (Name.contains("__SEMANTICS_unique_ptr_destroy"))
     return KnownFunc::Destructor;
   return KnownFunc::Unknown;
+}
+
+/// Check if the \p Op is passed through std::move. If so, return std::move's first (and only) operand.
+/// Otherwise, return \p Op.
+static Value *lookThroughNoopCast(Value *Op) {
+  if (CallInst *Call = dyn_cast<CallInst>(Op)) {
+    if (Call->getCalledFunction() &&
+        lookupFunc(Call->getCalledFunction()->getName()) == KnownFunc::GlobalMove)
+      return Call->getArgOperand(0);
+  }
+  return Op;
 }
 
 /// Set the lifetime of the unique_ptr move constructor arguments. The arguments
@@ -88,8 +101,11 @@ static void mapMoveConstArgs(CallInst *Call,
   Value *To = Call->getArgOperand(0);
   Value *From = Call->getArgOperand(1);
   LifetimeLookup[To] = Lifetime::MovedTo;
-  // TODO: this is ususally passed through `std::move` so we should check if we
-  // can trace this back and further.
+  LifetimeLookup[From] = Lifetime::Empty;
+  // The "From" argument is ususally passed through "std::move" so we check if
+  // we can trace the value back any further. Then, also mark that value as
+  // empty.
+  From = lookThroughNoopCast(From);
   LifetimeLookup[From] = Lifetime::Empty;
 }
 
