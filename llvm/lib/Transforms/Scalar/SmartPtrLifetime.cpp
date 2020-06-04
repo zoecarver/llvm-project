@@ -88,6 +88,8 @@ static void mapMoveConstArgs(CallInst *Call,
   Value *To = Call->getArgOperand(0);
   Value *From = Call->getArgOperand(1);
   LifetimeLookup[To] = Lifetime::MovedTo;
+  // TODO: this is ususally passed through `std::move` so we should check if we
+  // can trace this back and further.
   LifetimeLookup[From] = Lifetime::Empty;
 }
 
@@ -123,11 +125,31 @@ public:
     bool Changed = false;
     SmallVector<Instruction *, 8> DeadInsts;
     DenseMap<Value *, Lifetime> LifetimeLookup;
+    
+    auto InvalidateUnkown = [&](Instruction &Inst) {
+      // If there are any other uses of tracked values, those are unknown so,
+      // assume they make the pointer live (or "Unkown").
+      for (size_t OpIdx = 0; OpIdx < Inst.getNumOperands(); ++OpIdx) {
+        Value *Op = Inst.getOperand(OpIdx);
+        auto FoundItr = llvm::find_if(LifetimeLookup, [Op](auto Both) {
+          return Both.getFirst() == Op;
+        });
+        if (FoundItr != LifetimeLookup.end())
+          FoundItr->getSecond() = Lifetime::Unknown;
+      }
+    };
+    
     for (BasicBlock &Block : F) {
       for (Instruction &Inst : Block) {
         // If this is a call instruction, see if it gives us any lifetime
         // information.
         if (CallInst *Call = dyn_cast<CallInst>(&Inst)) {
+          // If we can't find the called function, invalidate any operands and
+          // skip the call.
+          if (!Call->getCalledFunction()) {
+            InvalidateUnkown(Inst);
+            continue;
+          }
           StringRef Name = Call->getCalledFunction()->getName();
           KnownFunc Func = lookupFunc(Name);
           if (Func == KnownFunc::MoveConst) {
@@ -136,16 +158,18 @@ public:
             // store.
             continue;
           } else if (Func == KnownFunc::Destructor) {
-            if (isDestructorNoop(Call, LifetimeLookup))
+            if (isDestructorNoop(Call, LifetimeLookup)) {
               DeadInsts.push_back(Call);
+              ++NumUniquePtrDestructorsRemoved;
+            }
             continue;
           }
           // If this call uses a value we're keeping track of.
           for (size_t ArgIdx = 0; ArgIdx < Call->getNumArgOperands();
                ++ArgIdx) {
             Value *Arg = Call->getArgOperand(ArgIdx);
-            auto FoundItr = llvm::find_if(LifetimeLookup, [Arg](auto both) {
-              return both.getFirst() == Arg;
+            auto FoundItr = llvm::find_if(LifetimeLookup, [Arg](auto Both) {
+              return Both.getFirst() == Arg;
             });
             if (FoundItr == LifetimeLookup.end())
               continue;
@@ -161,24 +185,21 @@ public:
           // Nothing more to be done with this instruction; continue.
           continue;
         }
-        // If there are any other uses of tracked values, those are unknown so,
-        // assume they make the pointer live (or "Unkown").
-        for (size_t OpIdx = 0; OpIdx < Inst.getNumOperands(); ++OpIdx) {
-          Value *Op = Inst.getOperand(OpIdx);
-          auto FoundItr = llvm::find_if(LifetimeLookup, [Op](auto both) {
-            return both.getFirst() == Op;
-          });
-          if (FoundItr != LifetimeLookup.end())
-            FoundItr->getSecond() = Lifetime::Unknown;
-        }
+        // If the instruction is unkown, invalidate any operands that we are
+        // tracking.
+        InvalidateUnkown(Inst);
       }
+      // We're in a new block, set all tracked values to "Unknown" because we
+      // don't know what block we may have come from.
+      // TODO: in the future we may be able to dominance analysis to safely
+      // perform multi-block optimizations.
+      for (auto &Both : LifetimeLookup)
+        Both.getSecond() = Lifetime::Unknown;
     }
 
     Changed = !DeadInsts.empty();
-    for (Instruction *I : DeadInsts) {
+    for (Instruction *I : DeadInsts)
       I->eraseFromParent();
-      ++NumUniquePtrDestructorsRemoved;
-    }
 
     return Changed;
   }
