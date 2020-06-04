@@ -2772,6 +2772,15 @@ move(unique_ptr<_Tp>& __t) _NOEXCEPT
     return static_cast<unique_ptr<_Tp>&&>(__t);
 }
 
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+__attribute__((abi_tag("__SEMANTICS_unique_ptr_global_move")))
+unique_ptr<_Tp>&&
+move(unique_ptr<_Tp>&& __t) _NOEXCEPT
+{
+    return __t;
+}
+
 template <class _Tp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<
