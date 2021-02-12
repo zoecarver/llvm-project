@@ -608,22 +608,16 @@ public:
                ) {}
 
     // tuple(U&& ...) constructors (including allocator_arg_t variants)
-    template <class ..._Up> struct _IsThisTuple : false_type { };
-    template <class _Up> struct _IsThisTuple<_Up> : is_same<__uncvref_t<_Up>, tuple> { };
-
-    template <class ..._Up>
-    using _EnableUTypesCtor = _And<
-        _BoolConstant<sizeof...(_Up) == sizeof...(_Tp)>,
-        _BoolConstant<sizeof...(_Tp) >= 1>,
-        _Not<_IsThisTuple<_Up...> >, // extension to allow mis-behaved user constructors
-        is_constructible<_Tp, _Up>...
-    >;
+    template<class ..._Up>
+    static const size_t __u_types_constraints =
+        sizeof...(_Up) == sizeof...(_Tp) &&
+        sizeof...(_Up) >= 1 &&
+        !_And<is_same<tuple, _Up>...>::value;
 
     template <class ..._Up, _EnableIf<
-        _And<
-            _Lazy<_EnableUTypesCtor, _Up...>,
-            is_convertible<_Up, _Tp>... // explicit check
-        >::value
+        __u_types_constraints<_Up...> &&
+        _And<is_constructible<_Tp, _Up>...>::value &&
+        _And<is_convertible<_Up, _Tp>...>::value
     , int> = 0>
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
     tuple(_Up&&... __u)
@@ -635,10 +629,9 @@ public:
                     _VSTD::forward<_Up>(__u)...) {}
 
     template <class ..._Up, _EnableIf<
-        _And<
-            _Lazy<_EnableUTypesCtor, _Up...>,
-            _Not<_Lazy<_And, is_convertible<_Up, _Tp>...> > // explicit check
-        >::value
+        __u_types_constraints<_Up...> &&
+        _And<is_constructible<_Tp, _Up>...>::value &&
+        !_And<is_convertible<_Up, _Tp>...>::value
     , int> = 0>
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
     explicit tuple(_Up&&... __u)
@@ -650,10 +643,9 @@ public:
                     _VSTD::forward<_Up>(__u)...) {}
 
     template <class _Alloc, class ..._Up, _EnableIf<
-        _And<
-            _Lazy<_EnableUTypesCtor, _Up...>,
-            is_convertible<_Up, _Tp>... // explicit check
-        >::value
+        __u_types_constraints<_Up...> &&
+        _And<is_constructible<_Tp, _Up>...>::value &&
+        _And<is_convertible<_Up, _Tp>...>::value
     , int> = 0>
     _LIBCPP_INLINE_VISIBILITY
     tuple(allocator_arg_t, const _Alloc& __a, _Up&&... __u)
@@ -665,10 +657,9 @@ public:
                     _VSTD::forward<_Up>(__u)...) {}
 
     template <class _Alloc, class ..._Up, _EnableIf<
-        _And<
-            _Lazy<_EnableUTypesCtor, _Up...>,
-            _Not<_Lazy<_And, is_convertible<_Up, _Tp>...> > // explicit check
-        >::value
+        __u_types_constraints<_Up...> &&
+        _And<is_constructible<_Tp, _Up>...>::value &&
+        !_And<is_convertible<_Up, _Tp>...>::value
     , int> = 0>
     _LIBCPP_INLINE_VISIBILITY
     explicit tuple(allocator_arg_t, const _Alloc& __a, _Up&&... __u)
