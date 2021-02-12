@@ -9,11 +9,8 @@
 
 // UNSUPPORTED: c++03
 
-// <tuple>
+// See https://llvm.org/PR31384
 
-// template <class TupleLike> tuple(TupleLike&&); // libc++ extension
-
-// See llvm.org/PR31384
 #include <tuple>
 #include <cassert>
 
@@ -69,17 +66,9 @@ int main(int, char**) {
   }
   count = 0;
   {
-    // FIXME: Libc++ incorrectly rejects this code.
-#ifndef _LIBCPP_VERSION
     std::tuple<Implicit> foo = ExplicitDerived<int>{42}; ((void)foo);
     static_assert(std::is_convertible<
-        ExplicitDerived<int>, std::tuple<Implicit>>::value,
-        "correct STLs accept this");
-#else
-    static_assert(!std::is_convertible<
-        ExplicitDerived<int>, std::tuple<Implicit>>::value,
-        "libc++ incorrectly rejects this");
-#endif
+        ExplicitDerived<int>, std::tuple<Implicit>>::value, "");
     assert(count == 0);
     std::tuple<Implicit> bar(ExplicitDerived<int>{42}); ((void)bar);
     assert(count == 1);

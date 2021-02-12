@@ -43,4 +43,15 @@ New Features
 API Changes
 -----------
 
-- ...
+- There has been several changes in the tuple constructors provided by libc++.
+  Those changes were made as part of an effort to regularize libc++'s tuple
+  implementation, which contained several subtle bugs due to these extensions.
+  If you notice a build breakage when initializing a tuple, make sure you
+  properly initialize all the tuple elements - this is probably the culprit.
+
+  In particular:
+  - The extension allowing tuples to be constructed from a smaller number of
+    elements than the number of elements in the tuple (in which case the remaining
+    elements would be default-constructed) has been removed.
+  - The extension allowing a tuple to be constructed from an array has been
+    removed.
