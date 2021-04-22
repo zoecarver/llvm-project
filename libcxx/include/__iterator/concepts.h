@@ -129,6 +129,11 @@ concept forward_iterator =
 
 // clang-format on
 
+template<class _From>
+[[nodiscard]] constexpr auto __to_unsigned_like(_From __x) noexcept {
+  return static_cast<make_unsigned_t<_From>>(__x);
+}
+
 #endif // !defined(_LIBCPP_HAS_NO_RANGES)
 
 _LIBCPP_END_NAMESPACE_STD
