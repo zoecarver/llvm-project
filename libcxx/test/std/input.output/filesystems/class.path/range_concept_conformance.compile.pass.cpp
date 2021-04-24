@@ -22,8 +22,10 @@ namespace stdr = std::ranges;
 
 static_assert(std::same_as<stdr::iterator_t<fs::path>, fs::path::iterator>);
 static_assert(stdr::common_range<fs::path>);
-static_assert(stdr::forward_range<fs::path>);
+static_assert(stdr::bidirectional_range<fs::path>);
+static_assert(!stdr::random_access_range<fs::path>);
 
 static_assert(std::same_as<stdr::iterator_t<fs::path const>, fs::path::const_iterator>);
 static_assert(stdr::common_range<fs::path const>);
-static_assert(stdr::forward_range<fs::path const>);
+static_assert(stdr::bidirectional_range<fs::path const>);
+static_assert(!stdr::random_access_range<fs::path const>);
