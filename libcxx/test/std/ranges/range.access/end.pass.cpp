@@ -19,6 +19,7 @@
 #include "test_iterators.h"
 
 using RangeEndT = decltype(std::ranges::end);
+using RangeCEndT = decltype(std::ranges::cend);
 
 static int globalBuff[8];
 
@@ -36,23 +37,29 @@ static_assert( std::is_invocable_v<RangeEndT, int (&)[1]>);
 
 struct EndMember {
   int x;
-  constexpr const int *begin() { return nullptr; }
-  constexpr const int *end() { return &x; }
+  constexpr const int *begin() const { return nullptr; }
+  constexpr const int *end() const { return &x; }
 };
 
 // Ensure that we can't call with rvalues with borrowing disabled.
-static_assert( std::is_invocable_v<RangeEndT, EndMember &>);
-static_assert(!std::is_invocable_v<RangeEndT, EndMember &&>);
+static_assert( std::is_invocable_v<RangeEndT,  EndMember &>);
+static_assert( std::is_invocable_v<RangeEndT,  EndMember const&>);
+static_assert(!std::is_invocable_v<RangeEndT,  EndMember &&>);
+static_assert( std::is_invocable_v<RangeCEndT, EndMember &>);
+static_assert( std::is_invocable_v<RangeCEndT, EndMember const&>);
 
 constexpr bool testArray() {
   int a[2];
   assert(std::ranges::end(a) == a + 2);
+  assert(std::ranges::cend(a) == a + 2);
 
   int b[2][2];
   assert(std::ranges::end(b) == b + 2);
+  assert(std::ranges::cend(b) == b + 2);
 
   EndMember c[2];
   assert(std::ranges::end(c) == c + 2);
+  assert(std::ranges::cend(c) == c + 2);
 
   return true;
 }
@@ -113,7 +120,10 @@ struct NonConstEndMember {
   constexpr int *end() { return &x; }
 };
 
-static_assert(!std::is_invocable_v<RangeEndT, NonConstEndMember const&>);
+static_assert( std::is_invocable_v<RangeEndT,  NonConstEndMember &>);
+static_assert(!std::is_invocable_v<RangeEndT,  NonConstEndMember const&>);
+static_assert(!std::is_invocable_v<RangeCEndT, NonConstEndMember &>);
+static_assert(!std::is_invocable_v<RangeCEndT, NonConstEndMember const&>);
 
 struct EnabledBorrowingEndMember {
   constexpr int *begin() const { return nullptr; }
@@ -126,6 +136,7 @@ inline constexpr bool std::ranges::enable_borrowed_range<EnabledBorrowingEndMemb
 constexpr bool testEndMember() {
   EndMember a;
   assert(std::ranges::end(a) == &a.x);
+  assert(std::ranges::cend(a) == &a.x);
 
   NonConstEndMember b;
   assert(std::ranges::end(b) == &b.x);
@@ -135,9 +146,11 @@ constexpr bool testEndMember() {
 
   EndMemberFunction d;
   assert(std::ranges::end(d) == &d.x);
+  assert(std::ranges::cend(d) == &d.x);
 
   EmptyPtrEndMember e;
   assert(std::ranges::end(e) == &e.x);
+  assert(std::ranges::cend(e) == &e.x);
 
   return true;
 }
@@ -150,6 +163,12 @@ struct EndFunction {
 
 static_assert( std::is_invocable_v<RangeEndT, EndFunction const&>);
 static_assert(!std::is_invocable_v<RangeEndT, EndFunction &&>);
+
+static_assert( std::is_invocable_v<RangeEndT,  EndFunction const&>);
+static_assert(!std::is_invocable_v<RangeEndT,  EndFunction &&>);
+static_assert(!std::is_invocable_v<RangeEndT,  EndFunction &>);
+static_assert( std::is_invocable_v<RangeCEndT, EndFunction const&>);
+static_assert( std::is_invocable_v<RangeCEndT, EndFunction &>);
 
 struct EndFunctionWithDataMember {
   int x;
@@ -174,6 +193,8 @@ struct EndFunctionByValue {
   friend constexpr int *begin(EndFunctionByValue) { return nullptr; }
   friend constexpr int *end(EndFunctionByValue) { return &globalBuff[1]; }
 };
+
+static_assert(!std::is_invocable_v<RangeCEndT, EndFunctionByValue>);
 
 struct EndFunctionEnabledBorrowing {
   friend constexpr int *begin(EndFunctionEnabledBorrowing) { return nullptr; }
@@ -226,24 +247,35 @@ struct BeginMemberEndFunction {
 constexpr bool testEndFunction() {
   const EndFunction a{};
   assert(std::ranges::end(a) == &a.x);
+  EndFunction aa{};
+  assert(std::ranges::cend(aa) == &aa.x);
 
   EndFunctionByValue b;
   assert(std::ranges::end(b) == &globalBuff[1]);
+  assert(std::ranges::cend(b) == &globalBuff[1]);
 
   EndFunctionEnabledBorrowing c;
   assert(std::ranges::end(std::move(c)) == &globalBuff[2]);
 
   const EndFunctionReturnsEmptyPtr d{};
   assert(std::ranges::end(d) == &d.x);
+  EndFunctionReturnsEmptyPtr dd{};
+  assert(std::ranges::cend(dd) == &dd.x);
 
   const EndFunctionWithDataMember e{};
   assert(std::ranges::end(e) == &e.x);
+  EndFunctionWithDataMember ee{};
+  assert(std::ranges::cend(ee) == &ee.x);
 
   const EndFunctionWithPrivateEndMember f{};
   assert(std::ranges::end(f) == &f.y);
+  EndFunctionWithPrivateEndMember ff{};
+  assert(std::ranges::cend(ff) == &ff.y);
 
   const BeginMemberEndFunction g{};
   assert(std::ranges::end(g) == &g.x);
+  BeginMemberEndFunction gg{};
+  assert(std::ranges::cend(gg) == &gg.x);
 
   return true;
 }

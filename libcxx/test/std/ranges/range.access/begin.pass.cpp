@@ -19,6 +19,7 @@
 #include "test_iterators.h"
 
 using RangeBeginT = decltype(std::ranges::begin);
+using RangeCBeginT = decltype(std::ranges::cbegin);
 
 static int globalBuff[8];
 
@@ -41,18 +42,24 @@ struct BeginMember {
 };
 
 // Ensure that we can't call with rvalues with borrowing disabled.
-static_assert( std::is_invocable_v<RangeBeginT, BeginMember &>);
-static_assert(!std::is_invocable_v<RangeBeginT, BeginMember &&>);
+static_assert( std::is_invocable_v<RangeBeginT,  BeginMember &>);
+static_assert( std::is_invocable_v<RangeBeginT,  BeginMember const&>);
+static_assert(!std::is_invocable_v<RangeBeginT,  BeginMember &&>);
+static_assert( std::is_invocable_v<RangeCBeginT, BeginMember &>);
+static_assert( std::is_invocable_v<RangeCBeginT, BeginMember const&>);
 
 constexpr bool testArray() {
   int a[2];
   assert(std::ranges::begin(a) == a);
+  assert(std::ranges::cbegin(a) == a);
 
   int b[2][2];
   assert(std::ranges::begin(b) == b);
+  assert(std::ranges::cbegin(b) == b);
 
   BeginMember c[2];
   assert(std::ranges::begin(c) == c);
+  assert(std::ranges::cbegin(c) == c);
 
   return true;
 }
@@ -100,7 +107,10 @@ struct NonConstBeginMember {
   constexpr int *begin() { return &x; }
 };
 
-static_assert(!std::is_invocable_v<RangeBeginT, NonConstBeginMember const&>);
+static_assert( std::is_invocable_v<RangeBeginT,  NonConstBeginMember &>);
+static_assert(!std::is_invocable_v<RangeBeginT,  NonConstBeginMember const&>);
+static_assert(!std::is_invocable_v<RangeCBeginT, NonConstBeginMember &>);
+static_assert(!std::is_invocable_v<RangeCBeginT, NonConstBeginMember const&>);
 
 struct EnabledBorrowingBeginMember {
   constexpr int *begin() const { return &globalBuff[0]; }
@@ -112,6 +122,7 @@ inline constexpr bool std::ranges::enable_borrowed_range<EnabledBorrowingBeginMe
 constexpr bool testBeginMember() {
   BeginMember a;
   assert(std::ranges::begin(a) == &a.x);
+  assert(std::ranges::cbegin(a) == &a.x);
 
   NonConstBeginMember b;
   assert(std::ranges::begin(b) == &b.x);
@@ -121,9 +132,11 @@ constexpr bool testBeginMember() {
 
   BeginMemberFunction d;
   assert(std::ranges::begin(d) == &d.x);
+  assert(std::ranges::cbegin(d) == &d.x);
 
   EmptyPtrBeginMember e;
   assert(std::ranges::begin(e) == &e.x);
+  assert(std::ranges::cbegin(e) == &e.x);
 
   return true;
 }
@@ -133,8 +146,11 @@ struct BeginFunction {
   friend constexpr const int *begin(BeginFunction const& bf) { return &bf.x; }
 };
 
-static_assert( std::is_invocable_v<RangeBeginT, BeginFunction const&>);
-static_assert(!std::is_invocable_v<RangeBeginT, BeginFunction &&>);
+static_assert( std::is_invocable_v<RangeBeginT,  BeginFunction const&>);
+static_assert(!std::is_invocable_v<RangeBeginT,  BeginFunction &&>);
+static_assert(!std::is_invocable_v<RangeBeginT,  BeginFunction &>);
+static_assert( std::is_invocable_v<RangeCBeginT, BeginFunction const&>);
+static_assert( std::is_invocable_v<RangeCBeginT, BeginFunction &>);
 
 struct BeginFunctionWithDataMember {
   int x;
@@ -155,6 +171,8 @@ struct BeginFunctionReturnsEmptyPtr {
 struct BeginFunctionByValue {
   friend constexpr int *begin(BeginFunctionByValue) { return &globalBuff[1]; }
 };
+
+static_assert(!std::is_invocable_v<RangeCBeginT, BeginFunctionByValue>);
 
 struct BeginFunctionEnabledBorrowing {
   friend constexpr int *begin(BeginFunctionEnabledBorrowing) { return &globalBuff[2]; }
@@ -190,21 +208,30 @@ static_assert(!std::is_invocable_v<RangeBeginT, BeginFunctionReturnsPtrConvertib
 constexpr bool testBeginFunction() {
   const BeginFunction a{};
   assert(std::ranges::begin(a) == &a.x);
+  BeginFunction aa{};
+  assert(std::ranges::cbegin(aa) == &aa.x);
 
   BeginFunctionByValue b;
   assert(std::ranges::begin(b) == &globalBuff[1]);
+  assert(std::ranges::cbegin(b) == &globalBuff[1]);
 
   BeginFunctionEnabledBorrowing c;
   assert(std::ranges::begin(std::move(c)) == &globalBuff[2]);
 
   const BeginFunctionReturnsEmptyPtr d{};
   assert(std::ranges::begin(d) == &d.x);
+  BeginFunctionReturnsEmptyPtr dd{};
+  assert(std::ranges::cbegin(dd) == &dd.x);
 
   const BeginFunctionWithDataMember e{};
   assert(std::ranges::begin(e) == &e.x);
+  BeginFunctionWithDataMember ee{};
+  assert(std::ranges::cbegin(ee) == &ee.x);
 
   const BeginFunctionWithPrivateBeginMember f{};
   assert(std::ranges::begin(f) == &f.y);
+  BeginFunctionWithPrivateBeginMember ff{};
+  assert(std::ranges::cbegin(ff) == &ff.y);
 
   return true;
 }
