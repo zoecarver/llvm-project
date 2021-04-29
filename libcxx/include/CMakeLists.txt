@@ -35,6 +35,7 @@ set(files
   __mutex_base
   __node_handle
   __nullptr
+  __ranges/access.h
   __ranges/enable_borrowed_range.h
   __split_buffer
   __sso_allocator
@@ -150,6 +151,7 @@ set(files
   random
   ranges
   ratio
+  ranges
   regex
   scoped_allocator
   semaphore
@@ -209,9 +211,9 @@ set(files
   wctype.h
   )
 
-configure_file("__config_site.in" "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}/__config_site" @ONLY)
+configure_file("__config_site.in" "${LIBCXX_GENERATED_INCLUDE_DIR}/__config_site" @ONLY)
 
-set(_all_includes "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}/__config_site")
+set(_all_includes "${LIBCXX_GENERATED_INCLUDE_DIR}/__config_site")
 foreach(f ${files})
   set(src "${CMAKE_CURRENT_SOURCE_DIR}/${f}")
   set(dst "${LIBCXX_GENERATED_INCLUDE_DIR}/${f}")
@@ -228,26 +230,24 @@ add_library(cxx-headers INTERFACE)
 add_dependencies(cxx-headers generate-cxx-headers ${LIBCXX_CXX_ABI_HEADER_TARGET})
 # TODO: Use target_include_directories once we figure out why that breaks the runtimes build
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC" OR "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
-  target_compile_options(cxx-headers INTERFACE /I "${LIBCXX_GENERATED_INCLUDE_DIR}"
-                                     INTERFACE /I "${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}")
+  target_compile_options(cxx-headers INTERFACE /I "${LIBCXX_GENERATED_INCLUDE_DIR}")
 else()
-  target_compile_options(cxx-headers INTERFACE -I${LIBCXX_GENERATED_INCLUDE_DIR}
-                                     INTERFACE -I${LIBCXX_GENERATED_INCLUDE_TARGET_DIR})
+  target_compile_options(cxx-headers INTERFACE -I "${LIBCXX_GENERATED_INCLUDE_DIR}")
 endif()
 
 if (LIBCXX_INSTALL_HEADERS)
   foreach(file ${files})
     get_filename_component(dir ${file} DIRECTORY)
     install(FILES ${file}
-      DESTINATION ${LIBCXX_INSTALL_INCLUDE_DIR}/${dir}
+      DESTINATION include/c++/v1/${dir}
       COMPONENT cxx-headers
       PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
     )
   endforeach()
 
   # Install the generated __config_site.
-  install(FILES ${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}/__config_site
-    DESTINATION ${LIBCXX_INSTALL_INCLUDE_TARGET_DIR}
+  install(FILES ${LIBCXX_GENERATED_INCLUDE_DIR}/__config_site
+    DESTINATION include/c++/v1
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
     COMPONENT cxx-headers)
 
