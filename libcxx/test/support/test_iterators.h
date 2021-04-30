@@ -667,6 +667,34 @@ private:
   I base_ = I();
 };
 
+template <class I>
+struct cxx20_forward_iterator {
+  using value_type = std::iter_value_t<I>;
+  using difference_type = std::iter_difference_t<I>;
+  using iterator_concept = std::forward_iterator_tag;
+
+  cxx20_forward_iterator() = default;
+
+  explicit constexpr cxx20_forward_iterator(I base) : base_(std::move(base)) {}
+
+  constexpr decltype(auto) operator*() const { return *base_; }
+
+  cxx20_forward_iterator& operator++() {
+    ++base_;
+    return *this;
+  }
+  cxx20_forward_iterator operator++(int) {
+    auto temp = *this;
+    ++*this;
+    return *this;
+  }
+
+  bool operator==(cxx20_forward_iterator const&) const = default;
+
+private:
+  I base_ = I();
+};
+
 #endif // TEST_STD_VER > 17 && defined(__cpp_lib_concepts)
 
 #undef DELETE_FUNCTION

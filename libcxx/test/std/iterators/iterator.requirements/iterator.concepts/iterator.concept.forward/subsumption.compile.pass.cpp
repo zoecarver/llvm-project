@@ -11,20 +11,24 @@
 // UNSUPPORTED: gcc-10
 // XFAIL: msvc && clang
 
-// map
+// std::forward_iterator;
 
-#include <map>
+#include <iterator>
 
 #include <concepts>
-#include <ranges>
 
-using range = std::map<int, int>;
-namespace stdr = std::ranges;
+// clang-format off
+template<std::input_iterator I>
+requires std::derived_from<std::_ITER_CONCEPT<I>, std::forward_iterator_tag>
+[[nodiscard]] constexpr bool check_subsumption() {
+  return false;
+}
 
-static_assert(std::same_as<stdr::iterator_t<range>, range::iterator>);
-static_assert(stdr::common_range<range>);
-static_assert(stdr::forward_range<range>);
+template<std::forward_iterator>
+requires true
+[[nodiscard]] constexpr bool check_subsumption() {
+  return true;
+}
+// clang-format on
 
-static_assert(std::same_as<stdr::iterator_t<range const>, range::const_iterator>);
-static_assert(stdr::common_range<range const>);
-static_assert(stdr::forward_range<range const>);
+static_assert(check_subsumption<int*>());
