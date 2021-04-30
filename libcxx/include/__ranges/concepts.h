@@ -11,8 +11,7 @@
 
 #include <__config>
 #include <__iterator/concepts.h>
-#include <__ranges/begin.h>
-#include <__ranges/end.h>
+#include <__ranges/access.h>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -36,7 +35,7 @@ namespace ranges {
     ranges::end(__t);
   };
 
-  // `iterator_t` defined in <__ranges/begin.h>
+  // `iterator_t` defined in <__ranges/access.h>
 
   template <range _Rp>
   using sentinel_t = decltype(ranges::end(declval<_Rp&>()));
