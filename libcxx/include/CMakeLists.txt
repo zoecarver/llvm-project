@@ -43,6 +43,7 @@ set(files
   __ranges/data.h
   __ranges/enable_borrowed_range.h
   __ranges/size.h
+  __ranges/subrange.h
   __ranges/view_interface.h
   __split_buffer
   __sso_allocator
