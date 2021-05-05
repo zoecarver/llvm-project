@@ -15,6 +15,8 @@ set(files
   __iterator/incrementable_traits.h
   __iterator/iter_move.h
   __iterator/iterator_traits.h
+  __iterator/functionish.h
+  __iterator/primitives.h
   __iterator/readable_traits.h
   __libcpp_version
   __locale
