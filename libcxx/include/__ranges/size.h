@@ -118,6 +118,11 @@ inline namespace __cpo {
   inline constexpr const auto ssize = __ssize::__fn{};
 } // namespace __cpo
 
+template<class _Range>
+concept sized_range = range<_Range> && requires(_Range& t) {
+  ranges::size(t);
+};
+
 } // namespace ranges
 
 // clang-format off

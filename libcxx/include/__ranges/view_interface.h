@@ -14,6 +14,7 @@
 #include <__iterator/concepts.h>
 #include <__ranges/access.h>
 #include <__ranges/empty.h>
+#include <__ranges/view.h>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)

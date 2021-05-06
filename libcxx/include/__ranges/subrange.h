@@ -31,17 +31,6 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // clang-format off
 namespace ranges {
-
-  template<class _Range>
-  concept borrowed_range =
-      range<_Range> &&
-      (is_lvalue_reference_v<_Range> || enable_borrowed_range<remove_cvref_t<_Range>>);
-
-  template<class _Range>
-  concept sized_range = range<_Range> && requires(_Range& t) {
-    ranges::size(t);
-  };
-
   template<class _From, class _To>
   concept __convertible_to_non_slicing =
     convertible_to<_From, _To> &&

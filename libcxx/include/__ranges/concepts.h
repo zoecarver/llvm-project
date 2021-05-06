@@ -66,6 +66,12 @@ namespace ranges {
   template <class _Tp>
   concept random_access_range =
       bidirectional_range<_Tp> && random_access_iterator<iterator_t<_Tp> >;
+
+  template<class _Range>
+  concept borrowed_range =
+      range<_Range> &&
+      (is_lvalue_reference_v<_Range> || enable_borrowed_range<remove_cvref_t<_Range>>);
+
 } // namespace ranges
 
 #endif // !defined(_LIBCPP_HAS_NO_RANGES)
