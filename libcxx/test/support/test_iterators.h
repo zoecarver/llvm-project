@@ -642,10 +642,10 @@ struct cpp20_input_iterator {
   using difference_type = std::iter_difference_t<I>;
   using iterator_concept = std::input_iterator_tag;
 
-  cpp20_input_iterator() = default;
+  constexpr cpp20_input_iterator() = default;
 
-  cpp20_input_iterator(cpp20_input_iterator&&) = default;
-  cpp20_input_iterator& operator=(cpp20_input_iterator&&) = default;
+  constexpr cpp20_input_iterator(cpp20_input_iterator&&) = default;
+  constexpr cpp20_input_iterator& operator=(cpp20_input_iterator&&) = default;
 
   cpp20_input_iterator(cpp20_input_iterator const&) = delete;
   cpp20_input_iterator& operator=(cpp20_input_iterator const&) = delete;
@@ -654,16 +654,16 @@ struct cpp20_input_iterator {
 
   constexpr decltype(auto) operator*() const { return *base_; }
 
-  cpp20_input_iterator& operator++() {
+  constexpr cpp20_input_iterator& operator++() {
     ++base_;
     return *this;
   }
 
-  void operator++(int) { ++base_; }
+  constexpr void operator++(int) { ++base_; }
 
-  [[nodiscard]] I const& base() const& { return base_; }
+  [[nodiscard]] constexpr I const& base() const& { return base_; }
 
-  [[nodiscard]] I base() && { return std::move(base_); }
+  [[nodiscard]] constexpr I base() && { return std::move(base_); }
 
 private:
   I base_ = I();
