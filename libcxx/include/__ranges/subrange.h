@@ -65,6 +65,7 @@ namespace ranges {
     _Iter __begin = _Iter();
     _Sent __end = _Sent();
 
+    __subrange_base() = default;
     constexpr __subrange_base(_Iter __iter, _Sent __sent)
       : __begin(_VSTD::move(__iter)), __end(__sent) { }
   };
@@ -76,6 +77,7 @@ namespace ranges {
     _Sent __end = _Sent();
     make_unsigned_t<iter_difference_t<_Iter>> __size = 0;
 
+    __subrange_base() = default;
     constexpr __subrange_base(_Iter __iter, _Sent __sent, decltype(__size) __size)
       : __begin(_VSTD::move(__iter)), __end(__sent), __size(__size) { }
   };

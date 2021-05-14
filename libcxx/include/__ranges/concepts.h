@@ -72,6 +72,9 @@ namespace ranges {
       range<_Range> &&
       (is_lvalue_reference_v<_Range> || enable_borrowed_range<remove_cvref_t<_Range>>);
 
+  template<bool _Const, class _Tp>
+  using __maybe_const = conditional_t<_Const, const _Tp, _Tp>;
+
 } // namespace ranges
 
 #endif // !defined(_LIBCPP_HAS_NO_RANGES)
