@@ -22,6 +22,51 @@ using std::optional;
 using std::nullopt_t;
 using std::nullopt;
 
+#if TEST_STD_VER >= 20
+consteval bool test_consteval()
+{
+    enum class State { inactive, constructed, destroyed };
+    State state = State::inactive;
+
+    struct StateTracker {
+      constexpr StateTracker(State& s)
+      : state_(&s)
+      {
+        s = State::constructed;
+      }
+      constexpr ~StateTracker() { *state_ = State::destroyed; }
+
+      State* state_;
+    };
+    {
+        optional<int> opt;
+        opt = nullopt;
+        assert(static_cast<bool>(opt) == false);
+    }
+    {
+        optional<int> opt(3);
+        opt = nullopt;
+        assert(static_cast<bool>(opt) == false);
+    }
+    {
+        optional<StateTracker> opt;
+        opt = nullopt;
+        assert(state == State::inactive);
+        assert(static_cast<bool>(opt) == false);
+    }
+    {
+        optional<StateTracker> opt(state);
+        assert(state == State::constructed);
+        opt = nullopt;
+        assert(state == State::destroyed);
+        assert(static_cast<bool>(opt) == false);
+    }
+    return true;
+}
+
+static_assert(test_consteval());
+#endif
+
 int main(int, char**)
 {
     {

@@ -44,6 +44,7 @@ set(files
   __ranges/empty.h
   __ranges/enable_borrowed_range.h
   __ranges/view.h
+  __ranges/semiregular_box.h
   __ranges/size.h
   __ranges/subrange.h
   __ranges/ref_view.h

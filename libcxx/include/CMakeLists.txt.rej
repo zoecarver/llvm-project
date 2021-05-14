@@ -1,0 +1,9 @@
+diff a/libcxx/include/CMakeLists.txt b/libcxx/include/CMakeLists.txt	(rejected hunks)
+@@ -38,6 +38,7 @@
+   __ranges/access.h
+   __ranges/concepts.h
+   __ranges/enable_borrowed_range.h
++  __ranges/semiregular_box.h
+   __ranges/view.h
+   __ranges/size.h
+   __split_buffer

@@ -37,6 +37,10 @@ Paper Status
    :header-rows: 1
    :widths: auto
 
+.. note::
+
+  .. [#note-P2231] P2231: Implemented ahead of time and backported to C++20, so as to not block C++20 ranges.
+
 .. _issues-status-cxx2b:
 
 Library Working Group Issues Status

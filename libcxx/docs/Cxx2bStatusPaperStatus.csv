@@ -10,4 +10,5 @@
 "`P2162R2 <https://wg21.link/P2162R2>`__","LWG","Inheriting from std::variant","February 2021","|Complete|","13.0"
 "`P2212R2 <https://wg21.link/P2212R2>`__","LWG","Relax Requirements for time_point::clock","February 2021","",""
 "`P2259R1 <https://wg21.link/P2259R1>`__","LWG","Repairing input range adaptors and counted_iterator","February 2021","",""
+"`P2231R1 <https://wg21.link/P2231R1>`__","LWG","Missing constexpr in std::optional and std::variant","February 2021","|In progress|","13.0"
 "","","","","",""

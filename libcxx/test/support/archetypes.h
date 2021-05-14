@@ -47,47 +47,47 @@ struct TestBase {
     static int move_assigned;
     static int destroyed;
 
-    static void reset() {
+    TEST_CONSTEXPR_CXX20 static void reset() {
         assert(alive == 0);
         alive = 0;
         reset_constructors();
     }
 
-    static void reset_constructors() {
+    TEST_CONSTEXPR_CXX20 static void reset_constructors() {
       constructed = value_constructed = default_constructed =
         copy_constructed = move_constructed = 0;
       assigned = value_assigned = copy_assigned = move_assigned = destroyed = 0;
     }
 
-    TestBase() noexcept : value(0) {
+    TEST_CONSTEXPR_CXX20 TestBase() noexcept : value(0) {
         ++alive; ++constructed; ++default_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && Explicit, bool>::type = true>
-    explicit TestBase(int x) noexcept : value(x) {
+    TEST_CONSTEXPR_CXX20 explicit TestBase(int x) noexcept : value(x) {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && !Explicit, bool>::type = true>
-    TestBase(int x) noexcept : value(x) {
+    TEST_CONSTEXPR_CXX20 TestBase(int x) noexcept : value(x) {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && Explicit, bool>::type = true>
-    explicit TestBase(int, int y) noexcept : value(y) {
+    TEST_CONSTEXPR_CXX20 explicit TestBase(int, int y) noexcept : value(y) {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && !Explicit, bool>::type = true>
-    TestBase(int, int y) noexcept : value(y) {
+    TEST_CONSTEXPR_CXX20 TestBase(int, int y) noexcept : value(y) {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && Explicit, bool>::type = true>
-    explicit TestBase(std::initializer_list<int>& il, int = 0) noexcept
+    TEST_CONSTEXPR_CXX20 explicit TestBase(std::initializer_list<int>& il, int = 0) noexcept
       : value(static_cast<int>(il.size())) {
         ++alive; ++constructed; ++value_constructed;
     }
     template <bool Dummy = true, typename std::enable_if<Dummy && !Explicit, bool>::type = true>
-    explicit TestBase(std::initializer_list<int>& il, int = 0) noexcept : value(static_cast<int>(il.size())) {
+    TEST_CONSTEXPR_CXX20 explicit TestBase(std::initializer_list<int>& il, int = 0) noexcept : value(static_cast<int>(il.size())) {
         ++alive; ++constructed; ++value_constructed;
     }
-    TestBase& operator=(int xvalue) noexcept {
+    TEST_CONSTEXPR_CXX20 TestBase& operator=(int xvalue) noexcept {
       value = xvalue;
       ++assigned; ++value_assigned;
       return *this;
@@ -95,26 +95,26 @@ struct TestBase {
 #ifndef TEST_WORKAROUND_C1XX_BROKEN_ZA_CTOR_CHECK
 protected:
 #endif // !TEST_WORKAROUND_C1XX_BROKEN_ZA_CTOR_CHECK
-    ~TestBase() {
+    TEST_CONSTEXPR_CXX20 ~TestBase() {
       assert(value != -999); assert(alive > 0);
       --alive; ++destroyed; value = -999;
     }
-    explicit TestBase(TestBase const& o) noexcept : value(o.value) {
+    TEST_CONSTEXPR_CXX20 explicit TestBase(TestBase const& o) noexcept : value(o.value) {
         assert(o.value != -1); assert(o.value != -999);
         ++alive; ++constructed; ++copy_constructed;
     }
-    explicit TestBase(TestBase && o) noexcept : value(o.value) {
+    TEST_CONSTEXPR_CXX20 explicit TestBase(TestBase && o) noexcept : value(o.value) {
         assert(o.value != -1); assert(o.value != -999);
         ++alive; ++constructed; ++move_constructed;
         o.value = -1;
     }
-    TestBase& operator=(TestBase const& o) noexcept {
+    TEST_CONSTEXPR_CXX20 TestBase& operator=(TestBase const& o) noexcept {
       assert(o.value != -1); assert(o.value != -999);
       ++assigned; ++copy_assigned;
       value = o.value;
       return *this;
     }
-    TestBase& operator=(TestBase&& o) noexcept {
+    TEST_CONSTEXPR_CXX20 TestBase& operator=(TestBase&& o) noexcept {
         assert(o.value != -1); assert(o.value != -999);
         ++assigned; ++move_assigned;
         value = o.value;
