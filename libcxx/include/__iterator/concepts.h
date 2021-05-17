@@ -166,6 +166,19 @@ concept contiguous_iterator =
     { _VSTD::to_address(__i) } -> same_as<add_pointer_t<iter_reference_t<_Ip>>>;
   };
 
+template<class _In, class _Out>
+concept indirectly_movable =
+  indirectly_readable<_In> &&
+  indirectly_writable<_Out, iter_rvalue_reference_t<_In>>;
+
+template<class _In, class _Out>
+concept indirectly_movable_storable =
+  indirectly_movable<_In, _Out> &&
+  indirectly_writable<_Out, iter_value_t<_In>> &&
+  movable<iter_value_t<_In>> &&
+  constructible_from<iter_value_t<_In>, iter_rvalue_reference_t<_In>> &&
+  assignable_from<iter_value_t<_In>&, iter_rvalue_reference_t<_In>>;
+
 // clang-format on
 
 #endif // !defined(_LIBCPP_HAS_NO_RANGES)
