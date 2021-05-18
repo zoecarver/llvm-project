@@ -18,6 +18,7 @@ set(files
   __iterator/concepts.h
   __iterator/incrementable_traits.h
   __iterator/iter_move.h
+  __iterator/iter_swap.h
   __iterator/iterator_traits.h
   __iterator/readable_traits.h
   __libcpp_version
