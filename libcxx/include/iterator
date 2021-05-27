@@ -491,6 +491,7 @@ template <class E> constexpr const E* data(initializer_list<E> il) noexcept;    
 #include <__debug>
 #include <__functional_base>
 #include <__iterator/advance.h>
+#include <__iterator/common_iterator.h>
 #include <__iterator/concepts.h>
 #include <__iterator/incrementable_traits.h>
 #include <__iterator/iter_move.h>
