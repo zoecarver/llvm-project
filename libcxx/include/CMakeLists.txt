@@ -1,4 +1,6 @@
 set(files
+  __algorithm/copy.h
+  __algorithm/unwrap_iter.h
   __availability
   __bit_reference
   __bits
