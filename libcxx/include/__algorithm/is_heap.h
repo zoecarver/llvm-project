@@ -20,7 +20,23 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _RandomAccessIterator, class _Compare>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+bool
+is_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)
+{
+    return _VSTD::is_heap_until(__first, __last, __comp) == __last;
+}
 
+template<class _RandomAccessIterator>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+bool
+is_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+    return _VSTD::is_heap(__first, __last, __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+}
 
 _LIBCPP_END_NAMESPACE_STD
 

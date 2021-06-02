@@ -1,5 +1,55 @@
 set(files
+  __algorithm/binary_search.h
+  __algorithm/clamp.h
   __algorithm/copy.h
+  __algorithm/equal_range.h
+  __algorithm/fill.h
+  __algorithm/generate.h
+  __algorithm/includes.h
+  __algorithm/inplace_merge.h
+  __algorithm/is_heap.h
+  __algorithm/is_heap_until.h
+  __algorithm/is_partitioned.h
+  __algorithm/is_sorted.h
+  __algorithm/lexicographical_compare.h
+  __algorithm/lexicographical_compare_three_way.h
+  __algorithm/lower_bound.h
+  __algorithm/make_heap.h
+  __algorithm/max.h
+  __algorithm/max_element.h
+  __algorithm/merge.h
+  __algorithm/min.h
+  __algorithm/min_element.h
+  __algorithm/minmax.h
+  __algorithm/minmax_element.h
+  __algorithm/move.h
+  __algorithm/next_permutation.h
+  __algorithm/nth_element.h
+  __algorithm/partial_sort.h
+  __algorithm/partition.h
+  __algorithm/partition_point.h
+  __algorithm/pop_heap.h
+  __algorithm/prev_permutation.h
+  __algorithm/push_heap.h
+  __algorithm/remove.h
+  __algorithm/replace.h
+  __algorithm/reverse.h
+  __algorithm/rotate.h
+  __algorithm/sample.h
+  __algorithm/set_difference.h
+  __algorithm/set_intersection.h
+  __algorithm/set_symmetric_difference.h
+  __algorithm/set_union.h
+  __algorithm/shift.h
+  __algorithm/shuffle.h
+  __algorithm/sort.h
+  __algorithm/sort_heap.h
+  __algorithm/stable_partition.h
+  __algorithm/stable_sort.h
+  __algorithm/swap.h
+  __algorithm/transform.h
+  __algorithm/unique.h
+  __algorithm/upper_bound.h
   __algorithm/unwrap_iter.h
   __availability
   __bit_reference

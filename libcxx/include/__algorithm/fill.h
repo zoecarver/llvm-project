@@ -20,7 +20,30 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _ForwardIterator, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+__fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_, forward_iterator_tag)
+{
+    for (; __first != __last; ++__first)
+        *__first = __value_;
+}
 
+template <class _RandomAccessIterator, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+__fill(_RandomAccessIterator __first, _RandomAccessIterator __last, const _Tp& __value_, random_access_iterator_tag)
+{
+    _VSTD::fill_n(__first, __last - __first, __value_);
+}
+
+template <class _ForwardIterator, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_)
+{
+    _VSTD::__fill(__first, __last, __value_, typename iterator_traits<_ForwardIterator>::iterator_category());
+}
 
 _LIBCPP_END_NAMESPACE_STD
 
