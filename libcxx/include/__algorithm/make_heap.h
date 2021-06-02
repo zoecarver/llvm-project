@@ -20,7 +20,38 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _Compare, class _RandomAccessIterator>
+_LIBCPP_CONSTEXPR_AFTER_CXX11 void
+__make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)
+{
+    typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
+    difference_type __n = __last - __first;
+    if (__n > 1)
+    {
+        // start from the first parent, there is no need to consider children
+        for (difference_type __start = (__n - 2) / 2; __start >= 0; --__start)
+        {
+            _VSTD::__sift_down<_Compare>(__first, __last, __comp, __n, __first + __start);
+        }
+    }
+}
 
+template <class _RandomAccessIterator, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)
+{
+    typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
+    _VSTD::__make_heap<_Comp_ref>(__first, __last, __comp);
+}
+
+template <class _RandomAccessIterator>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+    _VSTD::make_heap(__first, __last, __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+}
 
 _LIBCPP_END_NAMESPACE_STD
 

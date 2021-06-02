@@ -20,6 +20,8 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+// fill
+
 template <class _ForwardIterator, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
 void
@@ -43,6 +45,26 @@ void
 fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_)
 {
     _VSTD::__fill(__first, __last, __value_, typename iterator_traits<_ForwardIterator>::iterator_category());
+}
+
+// fill_n
+
+template <class _OutputIterator, class _Size, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+_OutputIterator
+__fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
+{
+    for (; __n > 0; ++__first, (void) --__n)
+        *__first = __value_;
+    return __first;
+}
+
+template <class _OutputIterator, class _Size, class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+_OutputIterator
+fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
+{
+   return _VSTD::__fill_n(__first, _VSTD::__convert_to_integral(__n), __value_);
 }
 
 _LIBCPP_END_NAMESPACE_STD

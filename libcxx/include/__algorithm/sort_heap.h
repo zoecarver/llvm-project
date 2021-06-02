@@ -20,7 +20,31 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _Compare, class _RandomAccessIterator>
+_LIBCPP_CONSTEXPR_AFTER_CXX17 void
+__sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)
+{
+    typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
+    for (difference_type __n = __last - __first; __n > 1; --__last, (void) --__n)
+        _VSTD::__pop_heap<_Compare>(__first, __last, __comp, __n);
+}
 
+template <class _RandomAccessIterator, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)
+{
+    typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
+    _VSTD::__sort_heap<_Comp_ref>(__first, __last, __comp);
+}
+
+template <class _RandomAccessIterator>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+sort_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
+{
+    _VSTD::sort_heap(__first, __last, __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+}
 
 _LIBCPP_END_NAMESPACE_STD
 

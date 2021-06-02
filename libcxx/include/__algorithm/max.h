@@ -20,7 +20,45 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _Tp, class _Compare>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+const _Tp&
+max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+{
+    return __comp(__a, __b) ? __b : __a;
+}
 
+template <class _Tp>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+const _Tp&
+max(const _Tp& __a, const _Tp& __b)
+{
+    return _VSTD::max(__a, __b, __less<_Tp>());
+}
+
+#ifndef _LIBCPP_CXX03_LANG
+
+template<class _Tp, class _Compare>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_Tp
+max(initializer_list<_Tp> __t, _Compare __comp)
+{
+    return *_VSTD::max_element(__t.begin(), __t.end(), __comp);
+}
+
+template<class _Tp>
+_LIBCPP_NODISCARD_EXT inline
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_Tp
+max(initializer_list<_Tp> __t)
+{
+    return *_VSTD::max_element(__t.begin(), __t.end(), __less<_Tp>());
+}
+
+#endif // _LIBCPP_CXX03_LANG
 
 _LIBCPP_END_NAMESPACE_STD
 

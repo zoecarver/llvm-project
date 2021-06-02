@@ -20,7 +20,87 @@ _LIBCPP_PUSH_MACROS
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _Compare, class _RandomAccessIterator>
+_LIBCPP_CONSTEXPR_AFTER_CXX17 void
+__partial_sort(_RandomAccessIterator __first, _RandomAccessIterator __middle, _RandomAccessIterator __last,
+             _Compare __comp)
+{
+    _VSTD::__make_heap<_Compare>(__first, __middle, __comp);
+    typename iterator_traits<_RandomAccessIterator>::difference_type __len = __middle - __first;
+    for (_RandomAccessIterator __i = __middle; __i != __last; ++__i)
+    {
+        if (__comp(*__i, *__first))
+        {
+            swap(*__i, *__first);
+            _VSTD::__sift_down<_Compare>(__first, __middle, __comp, __len, __first);
+        }
+    }
+    _VSTD::__sort_heap<_Compare>(__first, __middle, __comp);
+}
 
+template <class _RandomAccessIterator, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+partial_sort(_RandomAccessIterator __first, _RandomAccessIterator __middle, _RandomAccessIterator __last,
+             _Compare __comp)
+{
+    typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
+    _VSTD::__partial_sort<_Comp_ref>(__first, __middle, __last, __comp);
+}
+
+template <class _RandomAccessIterator>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+void
+partial_sort(_RandomAccessIterator __first, _RandomAccessIterator __middle, _RandomAccessIterator __last)
+{
+    _VSTD::partial_sort(__first, __middle, __last,
+                       __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+}
+
+// partial_sort_copy
+
+template <class _Compare, class _InputIterator, class _RandomAccessIterator>
+_LIBCPP_CONSTEXPR_AFTER_CXX17 _RandomAccessIterator
+__partial_sort_copy(_InputIterator __first, _InputIterator __last,
+                    _RandomAccessIterator __result_first, _RandomAccessIterator __result_last, _Compare __comp)
+{
+    _RandomAccessIterator __r = __result_first;
+    if (__r != __result_last)
+    {
+        for (; __first != __last && __r != __result_last; ++__first, (void) ++__r)
+            *__r = *__first;
+        _VSTD::__make_heap<_Compare>(__result_first, __r, __comp);
+        typename iterator_traits<_RandomAccessIterator>::difference_type __len = __r - __result_first;
+        for (; __first != __last; ++__first)
+            if (__comp(*__first, *__result_first))
+            {
+                *__result_first = *__first;
+                _VSTD::__sift_down<_Compare>(__result_first, __r, __comp, __len, __result_first);
+            }
+        _VSTD::__sort_heap<_Compare>(__result_first, __r, __comp);
+    }
+    return __r;
+}
+
+template <class _InputIterator, class _RandomAccessIterator, class _Compare>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+_RandomAccessIterator
+partial_sort_copy(_InputIterator __first, _InputIterator __last,
+                  _RandomAccessIterator __result_first, _RandomAccessIterator __result_last, _Compare __comp)
+{
+    typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
+    return _VSTD::__partial_sort_copy<_Comp_ref>(__first, __last, __result_first, __result_last, __comp);
+}
+
+template <class _InputIterator, class _RandomAccessIterator>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+_RandomAccessIterator
+partial_sort_copy(_InputIterator __first, _InputIterator __last,
+                  _RandomAccessIterator __result_first, _RandomAccessIterator __result_last)
+{
+    return _VSTD::partial_sort_copy(__first, __last, __result_first, __result_last,
+                                   __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+}
 
 _LIBCPP_END_NAMESPACE_STD
 
