@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP___ALGORITHM_COPY_H
-#define _LIBCPP___ALGORITHM_COPY_H
+#ifndef _LIBCPP___ALGORITHM_STABLE_SORT_H
+#define _LIBCPP___ALGORITHM_STABLE_SORT_H
 
 #include <__config>
 
@@ -26,4 +26,4 @@ _LIBCPP_END_NAMESPACE_STD
 
 _LIBCPP_POP_MACROS
 
-#endif // _LIBCPP___ALGORITHM_COPY_H
+#endif // _LIBCPP___ALGORITHM_STABLE_SORT_H
