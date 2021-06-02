@@ -10,6 +10,8 @@
 #define _LIBCPP___ALGORITHM_EQUAL_RANGE_H
 
 #include <__config>
+#include <__algorithm/lower_bound.h>
+#include <__algorithm/upper_bound.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

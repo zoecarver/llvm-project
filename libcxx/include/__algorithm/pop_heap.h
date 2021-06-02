@@ -21,61 +21,6 @@ _LIBCPP_PUSH_MACROS
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Compare, class _RandomAccessIterator>
-_LIBCPP_CONSTEXPR_AFTER_CXX11 void
-__sift_down(_RandomAccessIterator __first, _RandomAccessIterator /*__last*/,
-            _Compare __comp,
-            typename iterator_traits<_RandomAccessIterator>::difference_type __len,
-            _RandomAccessIterator __start)
-{
-    typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
-    typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
-    // left-child of __start is at 2 * __start + 1
-    // right-child of __start is at 2 * __start + 2
-    difference_type __child = __start - __first;
-
-    if (__len < 2 || (__len - 2) / 2 < __child)
-        return;
-
-    __child = 2 * __child + 1;
-    _RandomAccessIterator __child_i = __first + __child;
-
-    if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
-        // right-child exists and is greater than left-child
-        ++__child_i;
-        ++__child;
-    }
-
-    // check if we are in heap-order
-    if (__comp(*__child_i, *__start))
-        // we are, __start is larger than it's largest child
-        return;
-
-    value_type __top(_VSTD::move(*__start));
-    do
-    {
-        // we are not in heap-order, swap the parent with its largest child
-        *__start = _VSTD::move(*__child_i);
-        __start = __child_i;
-
-        if ((__len - 2) / 2 < __child)
-            break;
-
-        // recompute the child based off of the updated parent
-        __child = 2 * __child + 1;
-        __child_i = __first + __child;
-
-        if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
-            // right-child exists and is greater than left-child
-            ++__child_i;
-            ++__child;
-        }
-
-        // check if we are in heap-order
-    } while (!__comp(*__child_i, __top));
-    *__start = _VSTD::move(__top);
-}
-
-template <class _Compare, class _RandomAccessIterator>
 inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
 void
 __pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp,

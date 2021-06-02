@@ -10,6 +10,8 @@
 #define _LIBCPP___ALGORITHM_BINARY_SEARCH_H
 
 #include <__config>
+#include <__algorithm/lower_bound.h>
+#include <__algorithm/comp_ref_type.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

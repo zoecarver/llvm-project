@@ -10,6 +10,9 @@
 #define _LIBCPP___ALGORITHM_INPLACE_MERGE_H
 
 #include <__config>
+#include <__algorithm/rotate.h>
+#include <__algorithm/min.h>
+#include <__memory/temporary_buffer.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -19,6 +22,26 @@ _LIBCPP_PUSH_MACROS
 #include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+template <class _Predicate>
+class __invert // invert the sense of a comparison
+{
+private:
+    _Predicate __p_;
+public:
+    _LIBCPP_INLINE_VISIBILITY __invert() {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __invert(_Predicate __p) : __p_(__p) {}
+
+    template <class _T1>
+    _LIBCPP_INLINE_VISIBILITY
+    bool operator()(const _T1& __x) {return !__p_(__x);}
+
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY
+    bool operator()(const _T1& __x, const _T2& __y) {return __p_(__y, __x);}
+};
 
 template <class _Compare, class _InputIterator1, class _InputIterator2,
           class _OutputIterator>

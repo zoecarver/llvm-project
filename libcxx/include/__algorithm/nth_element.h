@@ -10,6 +10,7 @@
 #define _LIBCPP___ALGORITHM_NTH_ELEMENT_H
 
 #include <__config>
+#include <__algorithm/sort.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

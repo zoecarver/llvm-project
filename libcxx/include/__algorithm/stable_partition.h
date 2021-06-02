@@ -106,12 +106,6 @@ __second_half_done:
     //         |
 }
 
-struct __return_temporary_buffer
-{
-    template <class _Tp>
-    _LIBCPP_INLINE_VISIBILITY void operator()(_Tp* __p) const {_VSTD::return_temporary_buffer(__p);}
-};
-
 template <class _Predicate, class _ForwardIterator>
 _ForwardIterator
 __stable_partition(_ForwardIterator __first, _ForwardIterator __last, _Predicate __pred,

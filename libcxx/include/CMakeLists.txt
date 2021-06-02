@@ -1,10 +1,13 @@
 set(files
   __algorithm/binary_search.h
   __algorithm/clamp.h
+  __algorithm/comp_ref_type.h
+  __algorithm/comp.h
   __algorithm/copy.h
   __algorithm/equal_range.h
   __algorithm/fill.h
   __algorithm/generate.h
+  __algorithm/half_positive.h
   __algorithm/includes.h
   __algorithm/inplace_merge.h
   __algorithm/is_heap.h
@@ -40,6 +43,7 @@ set(files
   __algorithm/set_intersection.h
   __algorithm/set_symmetric_difference.h
   __algorithm/set_union.h
+  __algorithm/sift_down.h
   __algorithm/shift.h
   __algorithm/shuffle.h
   __algorithm/sort.h

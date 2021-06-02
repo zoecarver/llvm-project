@@ -10,6 +10,7 @@
 #define _LIBCPP___ALGORITHM_PARTIAL_SORT_H
 
 #include <__config>
+#include <__algorithm/sort_heap.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
