@@ -10,7 +10,6 @@
 #ifndef _LIBCPP___ALGORITHM_FIND_FIRST_OF_H
 #define _LIBCPP___ALGORITHM_FIND_FIRST_OF_H
 
-#include <__algorithm/algorithm_functional.h>
 #include <__config>
 #include <__iterator/iterator_traits.h>
 

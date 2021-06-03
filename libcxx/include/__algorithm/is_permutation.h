@@ -10,7 +10,6 @@
 #ifndef _LIBCPP___ALGORITHM_IS_PERMUTATION_H
 #define _LIBCPP___ALGORITHM_IS_PERMUTATION_H
 
-#include <__algorithm/algorithm_functional.h>
 #include <__config>
 #include <__iterator/iterator_traits.h>
 #include <__iterator/next.h>

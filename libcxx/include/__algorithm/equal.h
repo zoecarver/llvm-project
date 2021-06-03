@@ -10,8 +10,8 @@
 #ifndef _LIBCPP___ALGORITHM_EQUAL_H
 #define _LIBCPP___ALGORITHM_EQUAL_H
 
-#include <__algorithm/algorithm_functional.h>
 #include <__config>
+#include <__algorithm/comp.h>
 #include <__iterator/iterator_traits.h>
 #include <iterator> // FIXME: replace with <__iterator/distance.h> when it lands
 

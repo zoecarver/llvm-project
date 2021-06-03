@@ -52,11 +52,11 @@ set(files
   __algorithm/stable_sort.h
   __algorithm/swap.h
   __algorithm/transform.h
+  __algorithm/uniform_int_distribution.h
   __algorithm/unique.h
   __algorithm/upper_bound.h
   __algorithm/unwrap_iter.h
   __algorithm/adjacent_find.h
-  __algorithm/algorithm_functional.h
   __algorithm/all_of.h
   __algorithm/any_of.h
   __algorithm/count.h

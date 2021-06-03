@@ -11,6 +11,7 @@
 
 #include <__config>
 #include <__algorithm/half_positive.h>
+#include <__algorithm/comp.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
