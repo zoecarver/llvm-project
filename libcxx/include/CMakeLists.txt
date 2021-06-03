@@ -55,6 +55,25 @@ set(files
   __algorithm/unique.h
   __algorithm/upper_bound.h
   __algorithm/unwrap_iter.h
+  __algorithm/adjacent_find.h
+  __algorithm/algorithm_functional.h
+  __algorithm/all_of.h
+  __algorithm/any_of.h
+  __algorithm/count.h
+  __algorithm/count_if.h
+  __algorithm/equal.h
+  __algorithm/find.h
+  __algorithm/find_end.h
+  __algorithm/find_if.h
+  __algorithm/find_if_not.h
+  __algorithm/find_first_of.h
+  __algorithm/for_each.h
+  __algorithm/for_each_n.h
+  __algorithm/is_permutation.h
+  __algorithm/mismatch.h
+  __algorithm/none_of.h
+  __algorithm/search.h
+  __algorithm/search_n.h
   __availability
   __bit_reference
   __bits
@@ -66,6 +85,7 @@ set(files
   __format/format_error.h
   __format/format_parse_context.h
   __function_like.h
+  __functional/__search.h
   __functional_03
   __functional_base
   __functional_base_03

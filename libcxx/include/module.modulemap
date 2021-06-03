@@ -217,6 +217,10 @@ module std [system] {
     header "algorithm"
     export initializer_list
     export *
+    umbrella "__algorithm"
+    explicit module * {
+      export *
+    }
   }
   module any {
     header "any"
@@ -307,6 +311,7 @@ module std [system] {
   }
   module functional {
     header "functional"
+    umbrella "__functional"
     export *
   }
   module future {
@@ -346,6 +351,10 @@ module std [system] {
   module iterator {
     header "iterator"
     export *
+    umbrella "__iterator"
+    explicit module * {
+      export *
+    }
   }
   module latch {
     requires cplusplus14
@@ -415,6 +424,10 @@ module std [system] {
     export initializer_list
     export iterator
     export *
+    umbrella "__ranges"
+    explicit module * {
+      export *
+    }
   }
   module ratio {
     header "ratio"
